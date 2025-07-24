@@ -1,0 +1,238 @@
+<div id="q-data-security" class="question">
+  <div class="answer"> 
+    <p>This section addresses the measures in place to ensure the secure storage, transfer, recovery, and long-term preservation of data, particularly when dealing with sensitive or confidential information.</p>
+    {%- for dataset in data.dmp.datasets -%}
+        <h4>
+            {%- if dataset.name -%}
+                <strong>{{ macros.integrationValue(dataset.name) }}</strong>
+            {%- else -%}
+                <strong>(no name given)</strong>
+            {%- endif -%}
+            {# If will be published #}
+            {%- if dataset.isPublished._value is sameas true %} (published)
+            {%- elif dataset.isPublished._value is sameas false %} (not published)
+            {%- endif -%}:
+        </h4>
+
+        {# Information loss, leak, and vandalism #}
+        {%- if dataset.processingEnvironment -%}
+            {%- set processingEnviro = dataset.processingEnvironment -%}
+            {%- set impactSentences = {
+            'zero': "negligible",
+            'low': "acceptably low",
+            'medium': "moderate",
+            'high': "significant"
+            } -%}
+            {%- set impacts = [] -%}
+            {%- if processingEnviro.informationLostImpact._value in impactSentences %}
+                {%- set _ = impacts.append(impactSentences[processingEnviro.informationLostImpact._value] ~ " if information is lost" )%}
+            {%- endif %}
+            {%- if processingEnviro.informationLeakImpact._value in impactSentences %}
+                {%- set _ = impacts.append(impactSentences[processingEnviro.informationLeakImpact._value] ~ " if information is leaked") %}
+            {%- endif %}
+            {%- if processingEnviro.informationVandalizedImpact._value in impactSentences %}
+                {%- set _ = impacts.append(impactSentences[processingEnviro.informationVandalizedImpact._value] ~ " if information is vandalized") %}
+            {%- endif %}
+            {%- if impacts %}
+                <p>The potential impact on the project or organization is {{ impacts|join(", ") }}.</p>
+            {%- endif %}
+        {%- endif -%}
+
+        {# Sensitive Data #}
+        {%- if dataset.collection -%}
+            {%- if dataset.collection.isSensitiveDataCollection._value is sameas true -%}
+                {%- if dataset.collection.sensitiveDataCollection.isPersonalDataCollection._value is sameas true -%}
+                    <p>We are collecting personal data in this dataset
+                        {%- if dataset.collection.sensitiveDataCollection.personalDataCollection.purpose -%}
+                            , for the purpose: {{ dataset.collection.sensitiveDataCollection.personalDataCollection.purpose._value }}
+                        {%- endif -%}.
+                        {%- if dataset.collection.sensitiveDataCollection.personalDataCollection.isFullyAnonymized._value is sameas true %}
+                            The dataset is fully anonymized
+                            {%- set processes = dataset.collection.sensitiveDataCollection.personalDataCollection.anonymizationProcess.anonymizationProcessTechniques -%}
+                            {%- if processes and processes|length > 0 -%}
+                                , using the following anonymization process{{ "es" if processes|length > 1 else "" }}:
+                                <ul>
+                                {%- for process in processes -%}
+                                    <li>{{ process._label }}</li>
+                                {%- endfor -%}
+                                </ul>
+                            {%- endif -%}
+                        {%- elif dataset.collection.sensitiveDataCollection.personalDataCollection.isFullyAnonymized._value is sameas false -%}
+                            {%- if dataset.collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.isPseudonymized._value is sameas true %}
+                                The dataset is not fully anonymized, but it is pseudonymized.
+                            {%- elif dataset.collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.isPseudonymized._value is sameas false -%}
+                                The dataset is not fully anonymized, and it is not even pseudonymized{% if dataset.collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.noPseudonymizationReason %}, because {{ dataset.collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.noPseudonymizationReason._value }}{% endif %}.
+                        {%- endif -%}
+
+                        {# Other Safeguards, incl transfer outside EU #}
+                        {%- set nonAnonymizedDataset = dataset.collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData -%}
+                        <p>
+                        {%- if nonAnonymizedDataset.dataProcessingSafeguards and nonAnonymizedDataset.dataProcessingSafeguards|length > 0 -%}
+                            {%- set safeguardsList = nonAnonymizedDataset.dataProcessingSafeguards | map(attribute='_value') | join(", ") %}
+                            For processing this data we have established the following technical and procedural safeguards: {{ safeguardsList }}.
+                        {%- endif -%}
+                        {%- if nonAnonymizedDataset.isTransferOutsideEu._value is sameas true %}
+                            We plan to transfer this data outside the EU.
+                            {%- if nonAnonymizedDataset.transferOutsideEuProtectionProcess._value %}
+                                Additional protection measures are planned: {{ nonAnonymizedDataset.transferOutsideEuProtectionProcess._value }}.
+                            {%- else %}
+                                No specific details about additional protection measures are available yet.
+                            {%- endif -%}
+                        {%- elif nonAnonymizedDataset.isTransferOutsideEu._value is sameas false %}
+                            We are not planning to transfer this data outside the EU.
+                        {%- endif -%}
+                        </p>
+                    {%- endif -%}
+                {%- endif -%}
+                {%- if dataset.collection.sensitiveDataCollection.isOtherSensitiveDataCollection._value is sameas true -%}
+                    {%- set otherSensitiveData = dataset.collection.sensitiveDataCollection.otherSensitiveDataCollection -%}
+                    <p>
+                        This dataset contains sensitive data that is not personal data.
+                        {%- if otherSensitiveData.typeOfSensitiveData %}
+                            The type of sensitive data is: {{ otherSensitiveData.typeOfSensitiveData._value }}.
+                        {%- endif -%}
+                        {%- if otherSensitiveData.securityMeasures and otherSensitiveData.securityMeasures|length > 0 %}
+                            The following security measure{{ "s are" if otherSensitiveData.securityMeasures|length > 1 else " is" }} in place:
+                            <ul>
+                            {%- for measure in otherSensitiveData.securityMeasures %}
+                                <li>
+                                {{ measure.name._value if measure.name._value else "(no name given)" }}{% if measure.description._value %}: {{ measure.description._value }}{% endif %}
+                                </li>
+                            {%- endfor %}
+                            </ul>
+                        {%- endif -%}
+                    </p>
+                {%- endif -%}
+            {%- elif dataset.collection.isSensitiveDataCollection._value is sameas false -%}
+                <p>We are not collecting any sensitive data in this dataset.</p>
+            {%- endif -%}
+        {%- endif -%} 
+
+        {# Access control in shared workspace - who has access and what permissions #}
+        {%- if dataset.processingEnvironment -%}
+            {%- if dataset.processingEnvironment.isSharedWorkingSpace -%}
+                {%- if dataset.processingEnvironment.isSharedWorkingSpace._value is sameas true and dataset.processingEnvironment.sharedWorkingSpace.controlledAccess -%}
+                    <p>We will use a shared workspace
+                    {%- set controlledAccess = dataset.processingEnvironment.sharedWorkingSpace.controlledAccess -%}
+                    {%- set isLogged = dataset.processingEnvironment.sharedWorkingSpace.isLogged -%}
+                    {%- if controlledAccess._value == "membersReadWrite" %}
+                        where only all project members have read/write access to the data
+                    {%- elif controlledAccess._value == "anyoneReadMembersWrite" %}
+                        where anyone in the institute has read access to the data and all project members have read/write access
+                    {%- elif controlledAccess._value == "membersReadSelectMembersWrite" %}
+                        where only project members will have read access and only selected project members will be able to write data
+                    {%- elif controlledAccess._value == "anyoneReadRequestWrite" %}
+                        where anyone in the institute can read data and only project members can request write access
+                    {%- elif controlledAccess._value %}
+                        where access is as follows: {{ controlledAccess._value }}
+                    {%- endif -%}.
+                    {%- if isLogged._value is sameas true %}
+                        Access to the shared workspace is monitored and logged.
+                    {%- elif isLogged._value is sameas false %}
+                        Access to the shared workspace is not monitored or logged.
+                    {%- endif -%}
+                    </p>
+                {%- elif dataset.processingEnvironment.isSharedWorkingSpace._value is sameas false -%}
+                    {%- if dataset.processingEnvironment.isCustomWorkingSpaceSecure._value is sameas true -%}
+                        <p>We will not use a shared workspace; instead, project participants will use separate environments that are protected against both equipment failure and human error.</p>
+                    {%- endif -%}
+                {%- endif -%}
+            {%- endif -%}
+        {%- endif -%}
+
+        {# Cold Storage #}
+        {%- if dataset.preservationStrategy -%}
+            {# Cold Storage during project #}
+            {%- if dataset.preservationStrategy.usesLongTermStorageDuringProject._value is sameas true -%}
+                {%- set storage = dataset.preservationStrategy.longTermStorageDuringProject -%}
+                <p>We will use long-term storage during the project.
+                {%- if storage.isArchiveStoredRemotely._value is sameas true %}
+                    The archive will be stored in a remote location to protect the data against disasters.
+                {%- endif -%}
+                {%- if storage.isArchiveSecurityProvided._value is sameas true %}
+                    The archive need to be protected against loss or theft.
+                    {%- if storage.archiveSecurity -%}
+                        {%- set archiveSecurity = storage.archiveSecurity -%}
+                        {%- set details = [] %}
+                        {%- if archiveSecurity.isEncrypted._value is sameas true %}
+                            {%- set _ = details.append("is encrypted") %}
+                        {%- endif %}
+                        {%- if archiveSecurity.isKeyAccessClearlyDefined._value is sameas true %}
+                            {%- set _ = details.append("key access is clearly defined") %}
+                        {%- endif %}
+                        {%- if archiveSecurity.isPhysicalArchiveAccessDefined._value is sameas true %}
+                            {%- set _ = details.append("physical access to the archive is clearly defined") %}
+                        {%- endif %}
+                        {%- if details %}
+                            <span>
+                                The archive
+                                {%- if details|length == 1 %}
+                                    {{ details[0] }}.
+                                {%- elif details|length == 2 %}
+                                    {{ details[0] }} and {{ details[1] }}.
+                                {%- else %}
+                                    {{ details[:-1]|join(", ") }}, and {{ details[-1] }}.
+                                {%- endif -%}
+                            </span>
+                        {%- endif %}
+                    {%- endif -%}
+                {%- endif -%}
+                {%- if storage.isArchiveAccessDecided._value is sameas true -%}
+                    {%- if storage.archiveAccess.isRestoreRequesterDefined._value is sameas true %}
+                        It is established who can request data restoration from the archive.
+                    {%- endif -%}
+                {%- endif -%}
+                </p>
+            {%- elif dataset.preservationStrategy.usesLongTermStorageDuringProject._value is sameas false -%}
+                {%- set noStorage = dataset.preservationStrategy.noLongTermStorageDuringProject -%}
+                <p>We will not use long-term storage during the project
+                {%- if noStorage.canRegenerateOriginalData._value is sameas true %}
+                    and we can regenerate the original data if needed
+                {%- elif noStorage.canRegenerateOriginalData._value is sameas false %}
+                    and we cannot regenerate the original data if needed
+                {%- endif -%}.
+                </p>
+            {%- endif -%}
+
+            {# Repository #}
+            {%- if dataset.distributions|length > 0 -%}
+                This dataset has the following distribution{{ "s" if dataset.distributions|length > 1 else "" }} which will be stored in a repository:
+                <ul>
+                {%- for distribution in dataset.distributions -%}
+                    <li>
+                    {%- if distribution.name -%}
+                        <strong>{{ distribution.name._value }}</strong>
+                    {%- else -%}
+                        <strong>(no distribution name given)</strong>
+                    {%- endif -%}
+                    <p>This distribution will be accessible through the {{ distribution.dataStorage.type._value if distribution.dataStorage.type }} repository <em>{{ distribution.dataStorage.name._value if distribution.dataStorage.name else "(no repository name given)" }}</em>.
+                    {%- if distribution.dataStorage.storage -%}
+                        {%- set storage = distribution.dataStorage.storage -%}
+                        {%- if storage.backupFrequency._label %}
+                            The backup frequency is: {{ storage.backupFrequency._label | lower }}.
+                        {%- endif -%}
+                        {%- if storage.recoveryProcess._value %}
+                            In the event of incident the recovery process is: {{ storage.recoveryProcess._value | lower }}.
+                        {%- endif -%}
+                        {%- if storage.personResponsibleBackup and storage.personResponsibleBackup|length > 0 %}
+                            The person{{ "s" if storage.personResponsibleBackup|length > 1 else "" }} responsible for backups {{ "are" if storage.personResponsibleBackup|length > 1 else "is" }}
+                            {{ storage.personResponsibleBackup | map(attribute='name._value') | join(", ") }}.
+                        {%- endif -%}
+                        {%- if storage.isCertified._value is sameas true %}
+                            The repository
+                            {% if distribution.dataStorage.storage.isCertified._value is sameas true %}
+                                is certified{% if distribution.dataStorage.storage.certification %} ({{ distribution.dataStorage.storage.certification._label }}){% endif %}.
+                            {% elif distribution.dataStorage.storage.isCertified._value is sameas false %}
+                                is not certified.
+                            {% endif %}
+                        {%- endif -%}
+                    {%- endif -%}
+                    </p>
+                    </li>
+                {%- endfor -%}
+                </ul>
+            {%- endif -%}
+        {%- endif -%}
+    {%- endfor %}
+    </div>
+</div>

@@ -1,0 +1,46 @@
+<div id="dmp-projects">
+  <h2>Projects</h2>
+  {%- if data.dmp.projects|length > 0 -%}
+    <p>We will be working on the following projects and for those are the data and work described in this DMP.</p>
+
+    {% for project in data.dmp.projects %}
+      <div class="project">
+      {%- if project.name -%}
+        <h3>{{ project.name._value }}</h3>
+      {%- else -%}
+        <h3 class="empty-value">(project name not given)</h3>
+      {%- endif -%}
+
+        <dl>
+          <dt>Acronym</dt>
+          <dd>{{ project.acronym._value if project.acronym else "N/A" }}</dd>
+          <dt>Start date</dt>
+          <dd>{{ project.startDate._value if project.startDate else "N/A" }}</dd>
+          <dt>End date</dt>
+          <dd>{{ project.endDate._value if project.endDate else "N/A" }}</dd>
+          <dt>Funding</dt>
+          <dd>
+            {%- if project.fundings|length > 0 %}
+              <ul>
+              {%- for funding in project.fundings -%}
+                <li>{{ macros.integrationFairsharing(funding.funder._value)  if funding.funder else "no funder given"}}: {{ funding.grantId._value if funding.grantId else "no grant number given" }}  ({{ funding.status._value if funding.status else "status is unknown" }})</li>
+              {%- endfor %}
+              </ul>
+            {%- else -%}
+              Did not apply for any funding yet.
+            {%- endif -%}
+          </dd>
+          <dt>Abstract</dt>
+          <dd>
+          {%- if project.description -%}
+              <p>{{ project.description._value }}</p>
+          {%- else -%}
+            No abstract given.
+          {%- endif -%}
+          </dd>
+        </dl>
+    {%- endfor -%}
+  {%- else -%}
+    <div style="font-style:italic;">There are no projects described for this DMP.</div>
+  {%- endif -%}
+</div>

@@ -1,0 +1,429 @@
+<div id="q-accessible" class="question">
+  <div class="answer">
+   {%- if data.dmp.datasets|length > 0 -%}
+        <p>This section outlines how data will be made accessible to others, including details about repositories used, access protocols, possible restrictions, and conditions under which access will be granted.</p>
+        {%- for dataset in data.dmp.datasets -%}
+            <h4>
+                {%- if dataset.name -%}
+                <strong>{{ macros.integrationValue(dataset.name) }}</strong>
+                {%- else -%}
+                    <strong>(no name given)</strong>
+                {%- endif -%}
+                {# If will be published #}
+                {%- if dataset.isPublished._value is sameas true %} (published)
+                {%- elif dataset.isPublished._value is sameas false %} (not published)
+                {%- endif -%}:
+            </h4>
+
+            {%- if dataset.reuseRestriction -%}
+                {%- set accessRestriction = dataset.reuseRestriction.accessRestriction -%}
+                {# Ownership #}
+                {%- if accessRestriction.dataRightsArrangement._value == "no_copyrightable" -%}
+                    <p>Our data is legally not copyrightable, there is no rightsholder.</p>
+                {%- elif accessRestriction.dataRightsArrangement._value == "principal_investigator" -%}
+                    <p>The Principal Investigator is the rightsholder of all data.</p>
+                {%- elif accessRestriction.dataRightsArrangement._value == "institute" -%}
+                    <p>The institute is the rightsholder of all data.</p>
+                {%- elif accessRestriction.dataRightsArrangement._value == "intellectual_property" -%}
+                    <p>We have a consortium agreement that arranges Intellectual Property.</p>
+                {%- elif accessRestriction.dataRightsArrangement -%}
+                    <p>We have made the following arrangements regarding the data rightsholder: {{ accessRestriction.dataRightsArrangement|dot }}</p>
+                {%- endif -%}
+
+                {# Open philosophy  #}
+                {%- if accessRestriction.asOpenAsPossibleApproach._value is sameas true -%}
+                    <p>We will be working with the philosophy <em>as open as possible</em> for this dataset.</p>
+                {%- endif -%}
+
+                {# Can open data #}
+                {%- if accessRestriction.canDataOpen._value is sameas true -%}
+                    <p>This dataset can become completely open over time.</p>
+                {%- elif accessRestriction.canDataOpen._value is sameas false -%}
+                    {%- set dataCannotOpen = accessRestriction.dataCannotOpen -%}
+                    {%- set legalReasons = dataCannotOpen.isLegalReason._value -%}
+                    {%- set businessReasons = dataCannotOpen.isBusinessReason._value -%}
+                    {%- set otherReasons = dataCannotOpen.isOtherReason._value -%}
+                    {%- set anyReason = legalReasons or businessReasons or otherReasons -%}
+                    {%- set nReasons = [legalReasons, businessReasons, otherReasons]|select('equalto', true)|list|length -%}
+                    {%- if anyReason -%}
+                        <p>
+                        This dataset cannot become completely open because 
+                        {%- if nReasons == 1 -%}
+                            {%- if legalReasons %}
+                                {%- set privacy = dataCannotOpen.legalReason.isPrivacyReason._value -%}
+                                {%- set ip = dataCannotOpen.legalReason.isIntellectualPropertyReason._value -%}
+                                {%- set nLegal = [privacy, ip]|select('equalto', true)|list|length -%}
+                                {%- if nLegal == 1 -%}
+                                    {%- if privacy %}
+                                        due to privacy reasons.
+                                    {%- elif ip %}
+                                        due to intellectual property reasons.
+                                    {%- endif -%}
+                                {%- elif nLegal > 1 %}
+                                    due to privacy and intellectual property reasons.
+                                {%- else %}
+                                    of legal reasons.
+                                {%- endif -%}
+                            {%- elif businessReasons -%}
+                                {%- if dataCannotOpen.businessReason == "patents" %}
+                                    of patent-related business reasons.
+                                {%- else %}
+                                    of business reasons{{  ": " ~ dataCannotOpen.businessReason|dot if dataCannotOpen.businessReason else "." }}
+                                {%- endif -%}
+                            {%- elif otherReasons %}
+                                {%- if dataCannotOpen.otherReason == "papers" %}
+                                    we want to publish a paper first.
+                                {%- else %}
+                                    we have other reasons{{ ": " ~ dataCannotOpen.otherReason|dot if dataCannotOpen.otherReason else "." }}
+                                {%- endif -%}
+                            {%- endif -%}
+                        {%- else %} of:
+                        <ul>
+                            {%- if legalReasons %}
+                                {%- set privacy = dataCannotOpen.legalReason.isPrivacyReason._value -%}
+                                {%- set ip = dataCannotOpen.legalReason.isIntellectualPropertyReason._value -%}
+                                {%- set nLegal = [privacy, ip]|select('equalto', true)|list|length -%}
+                                {%- if nLegal == 1 -%}
+                                    {%- if privacy -%}
+                                        <li>privacy reasons</li>
+                                    {%- elif ip -%}
+                                        <li>intellectual property reasons</li>
+                                    {%- endif -%}
+                                {%- elif nLegal > 1 -%}
+                                    <li>privacy and intellectual property reasons</li>
+                                {%- else -%}
+                                    <li>legal reasons</li>
+                                {%- endif -%}
+                            {%- endif -%}
+                            {%- if businessReasons %}
+                                {%- if dataCannotOpen.businessReason == "patents" -%}
+                                    <li>patent-related business reasons</li>
+                                {%- else -%}
+                                    <li>business reasons{{  ": " ~ dataCannotOpen.businessReason if dataCannotOpen.businessReason else "" }}</li>
+                                {%- endif -%}
+                            {%- endif -%}
+                            {%- if otherReasons-%}
+                                {%- if dataCannotOpen.otherReason == "papers" -%}
+                                    <li>we want to publish a paper first</li>
+                                {%- else -%}
+                                    <li>other reasons{{ ": " ~ dataCannotOpen.otherReason if dataCannotOpen.otherReason else "" }}</li>
+                                {%- endif -%}
+                            {%- endif -%}
+                        </ul>
+                        {%- endif -%}
+                        </p>
+                    {%- endif -%}
+
+                    {# Data Access #}
+                    {%- if dataCannotOpen.isAccessProcessDefined._value is sameas true -%}
+                        <p>
+                            {%- set accessProcess = dataCannotOpen.accessProcess -%}
+                            The data access process is defined{% if accessProcess.description %} as follows: {{ accessProcess.description._value }}{% endif %}.
+                            {%- if accessProcess.timeFrame._value %}
+                                The process will take place within {{ accessProcess.timeFrame._value }}.
+                            {%- endif -%}
+                            {%- if accessProcess.isExpectedCost._value is sameas true and accessProcess.expectedCost._value %}
+                                The process will incur costs associated with accessing and using the data, which are expected to be {{ accessProcess.expectedCost._value }}  {{ " " + accessProcess.currency._value if accessProcess.currency._value else "(no currency given)" }}.
+                            {%- elif accessProcess.isExpectedCost._value is sameas true %}
+                                The process will incur costs associated with accessing and using the data.
+                            {%- endif -%}
+                        </p>
+                    {%- endif -%}
+                    {%- if dataCannotOpen.collaboratorAccessProcess -%}
+                        <p>
+                            For collaborators within the {{globals.projects}}, the access process is defined as follows: {{ dataCannotOpen.collaboratorAccessProcess._value }}.
+                        </p>
+                    {%- endif -%}
+
+                    {%- if legalReasons -%}
+                        {%- if dataCannotOpen.legalReason.isAuthenticatedAccess._value is sameas true -%}
+                            <p>
+                            Concerning the legal reasons, an authenticated access will be required.
+                            {%- if dataCannotOpen.legalReason.authenticatedAccess.authenticationProcess._value == "username_password" %}
+                                Username and password will be used for authentication.
+                            {%- elif dataCannotOpen.legalReason.authenticatedAccess.authenticationProcess._value == "sso" %}
+                                Single Sign-On (SSO) will be used for authentication.
+                            {%- elif dataCannotOpen.legalReason.authenticatedAccess.authenticationProcess %}
+                                Other authentication process will be used: {{ dataCannotOpen.legalReason.authenticatedAccess.authenticationProcess._value }}.
+                            {%- endif -%}
+                            {%- if dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value == "project_member" %}
+                                People can apply to one of the project members.
+                            {%- elif dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value == "new_data_access_committe" %}
+                                People can apply to the data access committee that we will set up.
+                            {%- elif dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate %}
+                                People can apply to the <em>{{ dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate }}</em> data access committee.
+                            {%- elif dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticateOther %}
+                                For the authorization of potential users, we will make special arrangements{{ ": " ~ dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticateOther._value|dot if dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticateOther  else "." }}
+                            {%- endif -%}
+                            {%- if dataCannotOpen.legalReason.authenticatedAccess.authenticationCriteriaAvailable._value is sameas true %}
+                                The criteria for authentication will be openly available.
+                            {%- endif -%}
+                            </p>
+                        {%- endif -%}
+                    {%- endif -%}
+
+                    {# Data Sharing Agreement #}
+                    {%- if dataCannotOpen.isDataSharingAgreementRequired._value is sameas true -%}
+                        {%- set dataSharingAgreement = dataCannotOpen.dataSharingAgreement -%}
+                        <p>A data sharing agreement will be required for accessing the data
+                        {%- if dataSharingAgreement.isDefined._value is sameas true %}
+                            (already defined)
+                        {%- elif dataSharingAgreement.isDefined._value is sameas false  %}
+                            (not yet defined)
+                        {%- endif -%}.
+                        {%- if dataSharingAgreement.documentLink._value and dataSharingAgreement.document %}
+                            The data sharing agreement can be accessed at {{ dataSharingAgreement.documentLink._value }} or you can download it: {{ macros.downloadUrlFile(dataSharingAgreement.document) }}.
+                        {%- elif dataSharingAgreement.documentLink._value %}
+                            The data sharing agreement can be accessed at {{ dataSharingAgreement.documentLink._value }}.
+                        {%- elif dataSharingAgreement.document %}
+                            You can download the data sharing agreement here: {{ macros.downloadUrlFile(dataSharingAgreement.document) }}.
+                        {%- endif -%}
+                        {%- if dataSharingAgreement.description._value %}
+                            Summary of the Data Sharing Agreement: {{ dataSharingAgreement.description._value }}.
+                        {%- endif -%}
+                        </p>
+                    {%- elif dataCannotOpen.isDataSharingAgreementRequired._value is sameas false -%}
+                        <p>A data sharing agreement will not be required for accessing the data.</p>
+                    {%- endif -%}
+                {%- endif -%}
+
+                {# Publishing metadata/documentation  #}
+                <p>
+                {%- if accessRestriction.isMetadataAvailable._value is sameas true -%}
+                    Metadata will be openly available for this dataset
+                    {%- if dataset.metadata -%}
+                        {%- if dataset.metadata.isLicenseCC0._value is sameas true %}
+                            (under the CC0 license)
+                        {%- elif dataset.metadata.isLicenseCC0._value is sameas false -%}
+                            {%- if dataset.metadata.noLicenseCC0Reason._value %} (not under the CC0 license, because: {{ dataset.metadata.noLicenseCC0Reason._value }})
+                            {%- else %} (not under the CC0 license){%- endif -%}
+                        {%- endif -%}
+                        {%- if dataset.metadata.isStandardMetadata._value is sameas true %} in a standard form that can be harvested and indexed
+                        {%- elif dataset.metadata.isStandardMetadata._value is sameas false -%}
+                            {%- if dataset.metadata.noStandardMetadata.canBeHarvestedIndexed._value is sameas true %} in a non-standard form that can be harvested and indexed
+                            {%- elif dataset.metadata.noStandardMetadata.canBeHarvestedIndexed._value is sameas false %} in a non-standard form that cannot be harvested and indexed
+                            {%- endif -%}
+                        {%- endif -%}
+                        {%- if dataset.metadata.isAvailableAfterDataNotAvailable._value is sameas true %}
+                            Metadata will be available even after the data is no longer available
+                            {%- if dataset.metadata.howAvailableGuaranteed._value %}
+                            (we will do the following: {{ dataset.metadata.howAvailableGuaranteed._value }})
+                            {%- endif -%}.
+                        {%- elif dataset.metadata.isAvailableAfterDataNotAvailable._value is sameas false %}
+                            Metadata will not be available after the data is no longer available
+                            {%- if dataset.metadata.noAvailableReason._value %}
+                                (because: {{ dataset.metadata.noAvailableReason._value }})
+                            {%- endif -%}.
+                        {%- endif -%}
+                    {%- endif -%}.
+                {%- elif accessRestriction.isMetadataAvailable._value is sameas false -%}
+                    Metadata will not be available for this dataset
+                    {%- if accessRestriction.noMetadataAvailableReason._value %} because: {{ accessRestriction.noMetadataAvailableReason._value }}.
+                    {%- endif -%}
+                {%- endif -%}
+                {%- if accessRestriction.isDocumentationAvailable._value is sameas true %}
+                    Documentation will be openly available for this dataset.
+                {%- elif accessRestriction.isDocumentationAvailable._value is sameas false %}
+                    Documentation will not be available for this dataset
+                    {%- if accessRestriction.noDocumentationAvailableReason._value %} because: {{ accessRestriction.noDocumentationAvailableReason._value }}.
+                    {%- endif -%}
+                {%- endif -%}
+                </p>
+            {%- endif -%}
+
+            {# Distributions #}
+            {%- if dataset.distributions|length > 0 -%}
+                <p>This dataset has {{ dataset.distributions|length }} distribution{{ 's' if dataset.distributions|length != 1 else '' }}:
+                <ul>
+                {%- for distribution in dataset.distributions -%}
+                    <li>
+                        {%- if distribution.name -%}
+                            <strong>{{ distribution.name._value }}</strong>
+                        {%- else -%}
+                            <strong>(no distribution name given)</strong>
+                        {%- endif -%}
+                        <p>
+                        {%- if distribution.dataStorage -%}
+                            {# Repository access #}
+                            This distribution will be accessible through the {{ distribution.dataStorage.type._value if distribution.dataStorage.type }} repository <em>{{ distribution.dataStorage.name._value if distribution.dataStorage.name else "(no repository name given)" }}</em>
+                            {%- if distribution.dataStorage.url %}
+                                (<a href="{{ distribution.dataStorage.url._value }}" target="_blank">{{ distribution.dataStorage.url._value }}</a>)
+                            {%- endif -%}.
+                            Details on datasets persistent identifiers and who provides them can be found in the Section 2.1.
+
+                            {# Certification #}
+                            {%- if distribution.dataStorage.storage.isCertified._value or distribution.dataStorage.storage.supportsVersioning._value  -%}
+                                The repository
+                                {% if distribution.dataStorage.storage.isCertified._value is sameas true %}
+                                    is certified{% if distribution.dataStorage.storage.certification %} ({{ distribution.dataStorage.storage.certification._label }}){% endif %}
+                                {% elif distribution.dataStorage.storage.isCertified._value is sameas false %}
+                                    is not certified
+                                {% endif %}
+
+                                {%- if distribution.dataStorage.storage.isCertified._value and distribution.dataStorage.storage.supportsVersioning._value %} and{% else %}.{% endif %}
+
+                                {# Versioning #}
+                                {% if distribution.dataStorage.storage.supportsVersioning._value is sameas true %}
+                                    supports versioning of the data.
+                                {% elif distribution.dataStorage.storage.supportsVersioning._value is sameas false %}
+                                    does not support versioning of the data.
+                                {% endif %}
+                            {%- endif -%}
+
+                            {# PID systems #}
+                            {% if distribution.dataStorage.storage.pidSystems|length > 0 %}
+                                It uses the following persistent identifier system{% if distribution.dataStorage.storage.pidSystems|length > 1 %}s{% endif %}: <em>{{ distribution.dataStorage.storage.pidSystems | map(attribute='pidSystem') | map(attribute='_value') | join('</em>, <em>') }}</em>
+                                {# Resolvable PID #}
+                                {% if distribution.dataStorage.storage.resolvablePid._value is sameas true %}
+                                    with resolvable persistent identifiers.
+                                {% elif distribution.dataStorage.storage.resolvablePid._value is sameas false %}
+                                    but does not use resolvable persistent identifiers.
+                                {% endif %}
+                            {% else %}
+                                {% if distribution.dataStorage.storage.resolvablePid._value is sameas true %}
+                                    It supports resolvable persistent identifiers.
+                                {% elif distribution.dataStorage.storage.resolvablePid._value is sameas false %}
+                                    It does not support resolvable persistent identifiers.
+                                {% endif %}
+                            {% endif %}
+
+                            {# Repository requirements #}
+                            {%- if distribution.dataStorage.agreementOnStorageInfrastructureUse._value -%}
+                                Accessing and using the hosting infrastructure may require following steps and agreements: {{ distribution.dataStorage.agreementOnStorageInfrastructureUse._value }}.
+                            {%- endif -%}
+
+                        {%- else -%}
+                            No repository specified for this distribution.
+                        {%- endif -%}
+                        </p>
+                    
+                        {# Licenses #}
+                        <p>
+                        {%- if distribution.isLicenseAssignedForDistribution._value is sameas true -%}
+                            {%- if distribution.licensing.isLicenseChosen._value is sameas true and distribution.licensing.licenses|length > 0 -%}
+                                The distribution will be available under the following {{ "licenses" if licensesItems|length > 1 else "license" }}:
+                                <ul>
+                                {%- for license in distribution.licensing.licenses -%}
+                                    <li>
+                                        {%- if license.license -%}
+                                            {{ macros.integrationValue(license.license) }}
+                                        {%- else -%}
+                                            <strong>(no name given):</strong>
+                                        {%- endif -%}
+                                        {%- if license.startDate -%}
+                                            <br>Start date: {{ license.startDate._value }}
+                                        {%- endif -%}
+                                    </li>
+                                {%- endfor -%}
+                                </ul>
+
+                            {%- elif distribution.licensing.isLicenseChosen._value is sameas false %}
+                                No license has been selected for this distribution yet.
+                                {%- if distribution.licensing.notYetDecidedLicense.isOpenLicense._value is sameas true %}
+                                    We intend to use an open license for this distribution.
+                                    {%- if distribution.licensing.notYetDecidedLicense.licenseBasedOnLicenseSelector %}
+                                        We have used the License Selector tool to help us decide, and as a result, we are considering the following license: {{ distribution.licensing.notYetDecidedLicense.licenseBasedOnLicenseSelector._value }}.
+                                    {%- endif -%}
+                                {%- elif distribution.licensing.notYetDecidedLicense.isOpenLicense._value is sameas false %}
+                                    We do not plan to use an open license for this distribution {%- if distribution.licensing.notYetDecidedLicense.noOpenLicenseReason %} because: {{ distribution.licensing.notYetDecidedLicense.noOpenLicenseReason._value }}{%- endif -%}
+                                {%- endif -%}
+                            {%- else -%}
+                                We plan to assign a license to this distribution, but it has not been specified yet.
+                            {%- endif -%}
+                        {%- elif distribution.isLicenseAssignedForDistribution._value is sameas false -%}
+                            No license specified for this distribution.
+                        {%- endif -%}
+                        </p>
+                        {# Free and Standard Protocol #}
+                        {%- if distribution.technicalAvailability -%}
+                            {%- set technicalAvailability = distribution.technicalAvailability -%}
+                            {%- if technicalAvailability.isAccessibleViaStandardProtocol._value is sameas true -%}
+                                <p>This distribution will be accessible via a standard protocol
+                                {%- if technicalAvailability.usedStandardProtocol._value %} ({{ technicalAvailability.usedStandardProtocol._value }})
+                                {%- endif -%}.</p>
+                            {%- elif technicalAvailability.isAccessibleViaStandardProtocol._value is sameas false -%}
+                                <p>This distribution will not be accessible via a standard protocol
+                                {%- if technicalAvailability.notAccessibleViaStandardProtocolReason._value %} because: {{ technicalAvailability.notAccessibleViaStandardProtocolReason._value }}.</p>
+                                {%- endif -%}
+                            {%- endif -%}
+                        {%- endif -%}
+
+                        {# When published? #}
+                        {%- if distribution.whenAvailable -%}
+                            <p>
+                            {%- if distribution.whenAvailable.isAvailableImmediately._value is sameas true %}
+                                This distribution will be published as soon as possible after collecting it.
+                            {%- elif distribution.whenAvailable.isAvailableImmediately._value is sameas false -%}
+                                {%- set postponedAvailability = distribution.whenAvailable.postponedAvailability %}
+                                This distribution will not be available immediately after collection.
+                                {%- if postponedAvailability.isExactStartDateKnown._value is sameas true and postponedAvailability.exactStartDate._value %}
+                                    It will be available starting from {{ postponedAvailability.exactStartDate._value }}.
+                                {%- elif postponedAvailability.isExactStartDateKnown._value is sameas false and postponedAvailability.availabilityDelayAfterProjectEnd._value %}
+                                    It will be available {{ postponedAvailability.availabilityDelayAfterProjectEnd._value }} after the end of the project.
+                                {%- endif -%}
+                                {%- if postponedAvailability.isEmbargoPeriod._value is sameas true %}
+                                    There will be an embargo period
+                                        {%- if postponedAvailability.embargoPeriod.durationEmbargoPeriod._value %}
+                                            of {{ postponedAvailability.embargoPeriod.durationEmbargoPeriod._value }}
+                                        {%- endif -%}
+                                        {%- if postponedAvailability.embargoPeriod.reason._value %}
+                                            (reason: {{ postponedAvailability.embargoPeriod.reason._value }})
+                                        {%- endif -%}.
+                                {%- elif postponedAvailability.isEmbargoPeriod._value is sameas false and postponedAvailability.noEmbargoReasonForPostponedAvailability._value %}
+                                    There is no embargo period; the postponed availability is due to: {{ postponedAvailability.noEmbargoReasonForPostponedAvailability._value }}.
+                                {%- endif -%}
+                            {%- else %}
+                                The availability date for this distribution has not been specified.
+                            {%- endif -%}
+                            </p>
+                        {%- endif -%}
+                    </li>
+                {%- endfor -%}
+                </ul>
+            {%- endif -%}
+
+            {# Software/Tools #}
+            {%- if data.dmp.areSpecialToolsRequired._value is sameas true -%}
+                {%- if dataset.tools|length > 0 -%}
+                    <p>A user of this data need specific software to be able to use it:
+                    <ul>
+                    {%- for tool in dataset.tools -%}
+                        <li><strong>{{ tool.name._value if tool.name else "(no name given)" }}</strong>
+                        <br>{{tool.description._value if tool.description else "(no description given)"}}<br>
+                        {%- if tool.isFreeAndAvailable._value is sameas true %}
+                            This tool is free and available for use.
+                        {%- elif tool.isFreeAndAvailable._value is sameas false %}
+                            This tool is not free and available for use.
+                            {%- if tool.noAvailableSolution %}
+                                However, there is an alternative solution that allows omitting this tool: {{tool.noAvailableSolution._value|dot}}
+                            {%- endif -%}
+                        {%- endif -%}
+                        {%- if tool.hasAccessLink._value is sameas true and tool.accessLink %}
+                            This tool can be accessed at {{tool.accessLink._value}}
+                        {%- elif tool.hasAccessLink._value is sameas false %}
+                            This tool cannot be accessed directly, but it can be obtained through other means.
+                            {%- if tool.noAccessLinkAlternatives.includesDocumentation._value is sameas true %}
+                                The documentation of this software will be included in the metadata of data set.
+                            {%- elif tool.noAccessLinkAlternatives.includesDocumentation._value is sameas false %}
+                                The documentation of this software will not be included in the metadata of this data set because: {{tool.noAccessLinkAlternatives.noDocumentationReason._value|dot if tool.noAccessLinkAlternatives.noDocumentationReason else '.'}}
+                            {%- endif -%}
+                            {%- if tool.noAccessLinkAlternatives.includesSoftware._value is sameas true %}
+                                The software (e.g. in open source code) will be included.
+                            {%- elif tool.noAccessLinkAlternatives.includesSoftware._value is sameas false %}
+                                The software (e.g. in open source code) will not be included.
+                            {%- endif -%}
+                        {%- endif -%}
+                        </li>
+                    {%- endfor -%}
+                    </ul>
+                    </p>
+                {%- else -%}
+                    A user of this data can use it without any specific software.
+                {%- endif -%}
+            {%- elif data.dmp.areSpecialToolsRequired._value is sameas false -%}
+                A user of any of the datasets can use it without any specific software{{ " because: " ~ data.dmp.noSpecialToolsReason._value if data.dmp.noSpecialToolsReason._value else "." }}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
+    </div>
+</div>
