@@ -6,24 +6,36 @@ The following {% if data.dmp.collaboration.contributors|length == 1 %}contributo
 <ul>
     {%- for contributor in data.dmp.collaboration.contributors -%}
         <li class="contributor">
-            <span class="name"><strong>{{ contributor.name._value }}</strong></span>
+            {%- if contributor.name -%}
+                <span class="name"><strong>{{ contributor.name._value }}</strong>{{ macros.linkQuestion(contributor.name._path) }}</span>
+            {%- else -%}
+                <span class="name"><strong>(no name given)</strong></span>
+            {%- endif -%}
             {{- " (" if contributor.email or contributor.orcid else "" -}}
             {%- if contributor.email -%}
-                {{macros.formatEmail(contributor.email) }}
+                {{macros.formatEmail(contributor.email) }}{{ macros.linkQuestion(contributor.email._path) }}
             {%- endif -%}
             {{ ", " if contributor.email and contributor.orcid else "" }}
             {%- if contributor.orcid -%}
-                {{ macros.formatOrcid(contributor.orcid) }}
+                {{ macros.formatOrcid(contributor.orcid) }}{{ macros.linkQuestion(contributor.orcid._path) }}
             {%- endif -%}
             {{- ") " if contributor.email or contributor.orcid else "" -}}
             {%- if contributor.projectsName and contributor.projectsName|length > 0 -%}
                 <br><span class="projects">{{ "Projects" if contributor.projectsName|length > 1 else "Project" }}:
-                    {%- for project in contributor.projectsName %}<span class="project-name"> {{ project }}</span>{% if not loop.last %},{% endif %}
+                    {%- for project in contributor.projectsName %}<span class="project-name"> {{ project }}</span>{{ macros.linkQuestion(project._path) }}{% if not loop.last %},{% endif %}
                     {%- endfor -%}
                 </span>
             {%- endif -%}
             {%- if contributor.affiliation -%}
-                <br>Affiliation: <span class="affiliation"> {{ macros.integrationValue(contributor.affiliation) }}</span>
+                {%- if contributor.affiliation._raw-%}
+                    {% for name in contributor.affiliation._raw.names -%}
+                        {% if "ror_display" in name.types %}
+                            <br>Affiliation: <span class="affiliation"><a href="{{ contributor.affiliation._raw.id }}">{{ name.value }}</a></span>{{ macros.linkQuestion(contributor.affiliation._path) }}
+                        {% endif %}
+                    {%- endfor %}
+                {%- elif contributor.affiliation._value -%}
+                    <br>Affiliation: <span class="affiliation"> {{ contributor.affiliation._value }}</span>{{ macros.linkQuestion(contributor.affiliation._path) }}
+                {%- endif -%}
             {%- endif -%}
             {% if contributor.roles|length > 0 %}
                 <br>Roles: {% for role in contributor.roles %}<span class="role">{{ role }}</span>{% if not loop.last %}, {% endif %}{% endfor %}

@@ -1,8 +1,8 @@
 {%- import "src/mapping/prepare-data.j2" as json with context -%}
 {%- import "src/mapping/object.j2" as obj with context -%}
-{%- import "src/macros.html.j2" as macros with context -%}
 {%- set dc = ctx|to_context_obj -%}
 {%- set data = obj.result -%}
+{%- import "src/macros.html.j2" as macros with context -%}
 {%- import "src/globals.j2" as globals with context -%}
 <!DOCTYPE HTML>
 <html lang="en">

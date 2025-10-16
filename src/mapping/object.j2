@@ -68,7 +68,6 @@
                 "funder": fundingItem.funder|default(None),
                 "status": fundingItem.status|default(None),
             } -%}
-            {%- do funding.funder.update({"_value": funding.funder._value}) -%}
             {%- do project.fundings.append(funding) -%}
         {%- endfor -%}
     {%- endif -%}
@@ -142,9 +141,6 @@
         "roles": contributorItem.roles|map(attribute="_label")|list,
         "projectsName": [],
     } -%}
-    {%- if contributor.affiliation -%}
-        {%- do contributor.affiliation.update({"_value": macros.integrationFairsharing(contributor.affiliation._value)}) -%}
-    {%- endif -%}
     {%- for project in contributorItem.projects -%}
         {%- if project.project and project.project._uuid in projectsMap -%}
             {%- set project_name = projectsMap[project.project._uuid].name._value if projectsMap[project.project._uuid].name else None -%}
@@ -178,12 +174,10 @@
         "name": policyItem.name|default(None), 
         "description": policyItem.description|default(None),
         "url": policyItem.url|default(None),
-        "scope": policyItem.scope|default(None),
+        "scope": policyItem.scope|list,
     } -%}
-    {%- if policyItem.scope._value == "other"-%}
-        {%- do policy.update({
-            "scope": policyItem.scope.other|default(None), 
-        }) -%}
+    {%- if policyItem.otherScope -%}
+        {%- do policy.scope.append({"_label": policyItem.otherScope._value}) -%}
     {%- endif -%}
     {%- do result.dmp.policies.append(policy) -%}
 {%- endfor -%}
@@ -208,9 +202,6 @@
             "reusedData": {},
             "noReusedReason": None,
         }-%}
-        {%- if consideredData.name -%}
-            {%- do consideredData.name.update({"_value": macros.integrationFairsharing(consideredData.name._value)}) -%}
-        {%- endif -%}
         {%- if consideredData.hasIdentifier._value is sameas true -%}
             {%- do consideredData.update({
                 "identifier": consideredDataItem.hasIdentifier.identifier|default(None),
@@ -224,8 +215,7 @@
                 {%- do consideredData.update({
                     "reusedData": {
                         "maintainer": consideredDataItem.isReused.maintainer|default(None),
-                        "contactPerson": consideredDataItem.isReused.contactPerson|default(None),
-                        "dataVolume": (consideredDataItem.isReused.dataVolume ~ " gigabytes") if consideredDataItem.isReused.dataVolume is not none else None,
+                        "dataVolume": consideredDataItem.isReused.dataVolume|default(None),
                         "purpose": consideredDataItem.isReused.purpose|default(None),
                         "conditions": consideredDataItem.isReused.conditions|default(None), 
                         "tools": [],
@@ -266,7 +256,7 @@
                             {%- do reusedData.users.append(contributorsMap[user.user._uuid]) -%}
                         {%- endif -%}
                     {%- endfor -%}
-                {%- endif -%} 
+                {%- endif -%}
         {%- elif consideredData.isReused._value is sameas false -%}
             {%- do consideredData.update({
                 "noReusedReason": consideredDataItem.isReused.noReusedReason|default(None),
@@ -302,18 +292,12 @@
         "tools": [],
         "reuseRestriction": {},
     } -%}
-    {%- if dataset.name -%}
-        {%- do dataset.name.update({"_value": macros.integrationFairsharing(dataset.name._value)}) -%}
-    {%- endif -%}
     {%- if datasetItem.identifiers|length > 0 -%}
         {%- for identifierItem in datasetItem.identifiers -%}
             {%- set identifier = {
                 "type": identifierItem.type|default(None),
                 "value": identifierItem.value|default(None),
             } -%}
-            {%- if identifier.type -%}
-                {%- do identifier.type.update({"_value": macros.integrationFairsharing(identifier.type._value)}) -%}
-            {%- endif -%}
             {%- do dataset.identifiers.append(identifier) -%}
         {%- endfor -%}
     {%- endif -%}
@@ -324,7 +308,9 @@
     {%- elif dataset.isPublished._value == "part" -%}
         {%- do dataset.update({
             "partPublished": datasetItem.isPublished.partOfDataset|default(None),
-            "isPublished": {"_value": true},
+        }) -%}
+        {%- do dataset.isPublished.update({
+            "_value": true
         }) -%}
     {%- endif -%}
     {%- for purpose in datasetItem.purposes -%}
@@ -448,8 +434,7 @@
             "usesQuestionnaires": collectionItem.isNonEquipmentCollection.usesQuestionnaires|default(None),
             "usesReportsForms": collectionItem.isNonEquipmentCollection.usesReportsForms|default(None),
             "usesPatientRecords": collectionItem.isNonEquipmentCollection.usesPatientRecords|default(None),
-            "isAccessToPatientRecordsArranged": None,
-            "usesOtherForms": collectionItem.isNonEquipmentCollection.usesOtherForms|default(None),
+            "usesOtherForms": None,
             "initialCaptureMethod": collectionItem.isNonEquipmentCollection.initialCaptureMethod|default(None),
             "dataNonDigitalEntryResponsibleParty": None, 
             "isDigitalAvailabilityArranged": None,
@@ -457,12 +442,7 @@
             "subjectivityRiskHandling": None,
             "unitsOfMeasurement": [],
         }) -%}
-        {%- if collection.nonEquipmentCollection.usesPatientRecords._value is sameas true -%}
-            {%- do collection.nonEquipmentCollection.update({
-                "isAccessToPatientRecordsArranged": collectionItem.isNonEquipmentCollection.usesPatientRecords.isAccessToPatientRecordsArranged|default(None),
-            }) -%}
-        {%- endif -%}
-        {%- if collection.nonEquipmentCollection.usesOtherForms is sameas true -%}
+        {%- if collectionItem.isNonEquipmentCollection.usesOtherForms._value is sameas true and collectionItem.isNonEquipmentCollection.usesOtherForms.otherForms._value -%}
             {%- do collection.nonEquipmentCollection.update({
                 "usesOtherForms": collectionItem.isNonEquipmentCollection.usesOtherForms.otherForms|default(None),
             }) -%}
@@ -644,7 +624,11 @@
                     "nonAnonymizedData": None,
                 }) -%}
                 {%- if collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.other -%}
-                    {%- do collection.sensitiveDataCollection.personalDataCollection.anonymizationProcessTechniques.append(collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.other) -%}
+                    {%- set other_technique =  collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.other -%}
+                    {%- do other_technique.update({
+                        "_label": collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.other._value,
+                    }) -%}
+                    {%- do collection.sensitiveDataCollection.personalDataCollection.anonymizationProcess.anonymizationProcessTechniques.append(other_technique) -%}
                 {%- endif -%}
                 {%- if collection.sensitiveDataCollection.personalDataCollection.anonymizationProcess.isSameLegalBasisAsCollection._value is sameas false -%}
                     {%- do collection.sensitiveDataCollection.personalDataCollection.anonymizationProcess.update({
@@ -666,10 +650,17 @@
                     "isDpiaRequired": collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.isDpiaRequired|default(None),
                     "isDpiaPerformedToPersonalData": None,
                     "dpia": None,
-                    "dataProcessingSafeguards": collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.safeguards.safeguardsDescription|map(attribute="_label")|list,
+                    "dataProcessingSafeguards": collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.safeguards.safeguardsDescription|list,
                     "isTransferOutsideEu": collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.safeguards.isTransferOutsideEu|default(None),
                     "transferOutsideEuProtectionProcess": None,
                 }) -%}
+                {%- if collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.safeguards.other -%}
+                    {%- set other_safeguard =  collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.safeguards.other -%}
+                    {%- do other_safeguard.update({
+                        "_label": collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.safeguards.other._value,
+                    }) -%}
+                    {%- do collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.dataProcessingSafeguards.append(other_safeguard) -%}
+                {%- endif -%}
                 {%- if collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.isPseudonymized._value is sameas false -%}
                     {%- do collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.update({
                         "noPseudonymizationReason": collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.isPseudonymized.noPseudonymizationReason|default(None),
@@ -678,9 +669,6 @@
                 {%- if collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.controllers  -%}
                     {%- for controllerItem in collectionItem.isSensitiveDataCollection.isPersonalDataCollection.isFullyAnonymized.controllers -%}
                         {%- set controller = controllerItem.controller|default(None) -%}
-                        {%- if controller -%}
-                            {%- do controller.update({"_value": macros.integrationFairsharing(controller._value)}) -%}
-                        {%- endif -%}
                         {%- do collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.controllers.append(controller) -%}
                     {%- endfor -%}
                 {%- endif -%}
@@ -733,7 +721,7 @@
         {%- elif collection.sensitiveDataCollection.isPersonalDataCollection._value is sameas false -%}
             {%- do collection.sensitiveDataCollection.update({
                 "personalDataCollection": None,
-                "isOtherSensitiveDataCollection": {"_value": true},
+                "isOtherSensitiveDataCollection": {"_value": true, "_path": collectionItem.isSensitiveDataCollection.isPersonalDataCollection._path},
                 "otherSensitiveDataCollection": {
                     "typeOfSensitiveData": collectionItem.isSensitiveDataCollection.isPersonalDataCollection.typeOfSensitiveData|default(None),
                     "securityMeasures": [],
@@ -743,6 +731,7 @@
                 {%- set securityMeasure = {
                     "name": securityMeasureItem.name|default(None),
                     "description": securityMeasureItem.description|default(None),
+                    "_path": securityMeasureItem._path,
                 } -%}
                 {%- do collection.sensitiveDataCollection.otherSensitiveDataCollection.securityMeasures.append(securityMeasure) -%}
             {%- endfor -%}
@@ -797,6 +786,11 @@
                 "isLogged": processingEnvironmentItem.isSharedWorkingSpace.isLogged|default(None)
             }
         }) -%}
+        {%- if processingEnvironment.sharedWorkingSpace.controlledAccess._value == "other" and processingEnvironmentItem.isSharedWorkingSpace.controlledAccess.other -%}
+            {%- do processingEnvironment.sharedWorkingSpace.update({
+                "controlledAccess": processingEnvironmentItem.isSharedWorkingSpace.controlledAccess.other|default(None),
+            }) -%}
+        {%- endif -%}
     {%- elif processingEnvironment.isSharedWorkingSpace._value is sameas false -%}
         {%- do processingEnvironment.update({
             "isCustomWorkingSpaceSecure": processingEnvironmentItem.isSharedWorkingSpace.isCustomWorkingSpaceSecure|default(None),
@@ -859,17 +853,8 @@
         {%- do distribution.licensing.update({
             "isLicenseStoredWithDistribution":license.isLicenseStoredWithDistribution|default(None),
             "isLicenseChosen": license.isLicenseChosen|default(None),
-            "licenses": [
-                    { 
-                        "license": None,
-                        "startDate": None,
-                    }
-            ],
-            "notYetDecidedLicense": {
-                "isOpenLicense": None,
-                "noOpenLicenseReason": None,
-                "licenseBasedOnLicenseSelector": None,
-            },
+            "licenses": [],
+            "notYetDecidedLicense": {},
         }) -%}
         {%- if distribution.licensing.isLicenseChosen._value is sameas true -%}
             {%- for licenseItem in license.isLicenseChosen.licenses -%}
@@ -877,9 +862,6 @@
                     "license": licenseItem.license|default(None),
                     "startDate": licenseItem.startDate|default(None),
                 } -%}
-                {%- if licenseElement.license -%}
-                    {%- do licenseElement.license.update({"_value": macros.integrationFairsharing(licenseElement.license._value)}) -%}
-                {%- endif -%}
                 {%- do distribution.licensing.licenses.append(licenseElement) -%}
             {%- endfor -%}
         {%- elif distribution.licensing.isLicenseChosen._value is sameas false -%}
@@ -941,7 +923,7 @@
             "needsAddFields": distributionItem.usesNewDataType.needsAddFields|default(None),
             "dataTypeRegistry": distributionItem.usesNewDataType.dataTypeRegistry|default(None),
             "creationProcess": distributionItem.usesNewDataType.creationProcess|default(None),
-            "descriptionForOther": distributionItem.usesNewDataType.descriptionForOther|default(None),
+            "descriptionForOther": distributionItem.usesNewDataType.descriptionForOthers|default(None),
             "usesNewOntology": distributionItem.usesNewDataType.usesOntology|default(None),
             "providesOntologyMapping": None,
         }) -%}
@@ -958,7 +940,6 @@
             "name": ontologyItem.name|default(None),
             "url": ontologyItem.url|default(None),
         } -%}
-        {%- do ontology.name.update({"_value": macros.integrationFairsharing(ontology.name._value)}) -%}
         {%- do distribution.usedOntologies.append(ontology) -%}
     {%- endfor -%}
 
@@ -1058,7 +1039,7 @@
             "url": dataStorageItem.url|default(None),
             "availability": dataStorageItem.availability|default(None),
             "geographicalLocation": dataStorageItem.geographicalLocation|default(None),
-            "type": dataStorageItem.type|default(None),
+            "type": dataStorageItem.type|list,
             "agreementOnStorageInfrastructureUse": dataStorageItem.agreementOnStorageInfrastructureUse|default(None),
             "storage": {
                 "backupType": dataStorageItem.storage.backupType|default(None),
@@ -1096,17 +1077,13 @@
             {%- do dataStorage.storage.update({
                 "certification": dataStorageItem.storage.isCertified.certification|default(None),
             }) -%}
-            {%- if dataStorage.storage.certification._value == "other" -%}
+            {%- if dataStorage.storage.certification._label == "Other" -%}
                 {%- do dataStorage.storage.update({
                     "certification": dataStorageItem.storage.isCertified.certification.other|default(None),
                 }) -%}
             {%- endif -%}
         {%- endif -%}
         {%- for pidSystemItem in dataStorageItem.storage.pidSystems -%}
-            {%- set pid = pidSystemItem.pidSystem|default(None) -%}
-            {%- if pid -%}
-                {%- do pidSystemItem.pidSystem.update({"_value": macros.integrationFairsharing(pid._value)}) -%}
-            {%- endif -%}
             {%- do dataStorage.storage.pidSystems.append(pidSystemItem) -%}
         {%- endfor -%}
 
@@ -1485,7 +1462,7 @@
             "isMetadataAvailable": reuseRestrictionItem.accessRestriction.isMetadataAvailable|default(None),
             "noMetadataAvailableReason": None,
             "isDocumentationAvailable": reuseRestrictionItem.accessRestriction.isDocumentationAvailable|default(None),
-            "noDocumentationAvailableReason": None,
+            "noDocumentationAvailableReason": "super truper",
         },
     } -%}
     {%- if reuseRestriction.isReuseRestrictionSpecified._value is sameas true -%}
@@ -1560,9 +1537,9 @@
                         "authenticationProcess": reuseRestrictionItem.accessRestriction.canDataOpen.isLegalReason.isAuthenticatedAccess.authenticationProcess.other|default(None),
                     }) -%}
                 {%- endif -%}
-                {%- if reuseRestriction.accessRestriction.dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value == "existing_data_access_committe"  -%}
-                    {%- do reuseRestriction.accessRestriction.dataCannotOpen.legalReason.authenticatedAccess.update({
-                        "whoAuthenticate": reuseRestrictionItem.accessRestriction.canDataOpen.isLegalReason.isAuthenticatedAccess.whoAuthenticate.dataAccessCommitte|default(None),
+                {%- if reuseRestriction.accessRestriction.dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value == "existing_data_access_committee"  -%}
+                    {%- do reuseRestriction.accessRestriction.dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate.update({
+                        "dataAccessCommittee": reuseRestrictionItem.accessRestriction.canDataOpen.isLegalReason.isAuthenticatedAccess.whoAuthenticate.dataAccessCommittee|default(None),
                     }) -%}
                 {%- elif reuseRestriction.accessRestriction.dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value == "other"  -%}
                     {%- do reuseRestriction.accessRestriction.dataCannotOpen.legalReason.authenticatedAccess.update({
@@ -1572,35 +1549,35 @@
             {%- endif -%}
         {%- endif -%}
         {%- if reuseRestriction.accessRestriction.dataCannotOpen.isBusinessReason._value == "yes_other" -%}
+            {%- do reuseRestriction.accessRestriction.dataCannotOpen.isBusinessReason.update({"_value": true}) -%}
             {%- do reuseRestriction.accessRestriction.dataCannotOpen.update({
-                "isBusinessReason": {"_value": true},
-                "businessReason": reuseRestrictionItem.accessRestriction.canDataOpen.isBusinessReason.other|default(None),
+            "businessReason": reuseRestrictionItem.accessRestriction.canDataOpen.isBusinessReason.other|default(None),
             }) -%}
         {%- elif reuseRestriction.accessRestriction.dataCannotOpen.isBusinessReason._value  == "yes_patents" -%}
+            {%- do reuseRestriction.accessRestriction.dataCannotOpen.isBusinessReason.update({"_value": true}) -%}
             {%- do reuseRestriction.accessRestriction.dataCannotOpen.update({
-                "businessReason": "patents",
-                "isBusinessReason": {"_value": true},
+            "businessReason": "patents",
             }) -%}
         {%- elif reuseRestriction.accessRestriction.dataCannotOpen.isBusinessReason._value  == "no" -%}
+            {%- do reuseRestriction.accessRestriction.dataCannotOpen.isBusinessReason.update({"_value": false}) -%}
             {%- do reuseRestriction.accessRestriction.dataCannotOpen.update({
-                "isBusinessReason": {"_value": false},
-                "businessReason": None,
+            "businessReason": None,
             }) -%}
         {%- endif -%}
         {%- if reuseRestriction.accessRestriction.dataCannotOpen.isOtherReason._value == "yes_other" -%}
+            {%- do reuseRestriction.accessRestriction.dataCannotOpen.isOtherReason.update({"_value": true}) -%}
             {%- do reuseRestriction.accessRestriction.dataCannotOpen.update({
-                "otherReason": reuseRestrictionItem.accessRestriction.canDataOpen.isOtherReason.other|default(None),
-                "isOtherReason": {"_value": true},
+            "otherReason": reuseRestrictionItem.accessRestriction.canDataOpen.isOtherReason.other|default(None),
             }) -%}
         {%- elif reuseRestriction.accessRestriction.dataCannotOpen.isOtherReason._value == "yes_papers" -%}
+            {%- do reuseRestriction.accessRestriction.dataCannotOpen.isOtherReason.update({"_value": true}) -%}
             {%- do reuseRestriction.accessRestriction.dataCannotOpen.update({
-                "otherReason": "papers",
-                "isOtherReason": {"_value": true},
+            "otherReason": "papers",
             }) -%}
         {%- elif reuseRestriction.accessRestriction.dataCannotOpen.isOtherReason._value == "no" -%}
+            {%- do reuseRestriction.accessRestriction.dataCannotOpen.isOtherReason.update({"_value": false}) -%}
             {%- do reuseRestriction.accessRestriction.dataCannotOpen.update({
-                "otherReason": None,
-                "isOtherReason": {"_value": false},
+            "otherReason": None,
             }) -%}
         {%- endif -%}
         {%- if reuseRestriction.accessRestriction.dataCannotOpen.isAccessProcessDefined._value is sameas true -%}
@@ -1635,16 +1612,16 @@
         {%- endif -%}
     {%- endif -%}
     {%- if reuseRestriction.accessRestriction.dataRightsArrangement._value == "other" -%}
-        {%- do reuseRestriction.accessRestriction.update({
-            "dataRightsArrangement": reuseRestrictionItem.accessRestriction.dataRightsArrangement.other|default(None),
+        {%- do reuseRestriction.accessRestriction.dataRightsArrangement.update({
+            "_value": reuseRestrictionItem.accessRestriction.dataRightsArrangement.other._value|default(None),
         }) -%}
     {%- endif -%}
-    {%- if reuseRestriction.accessRestriction.isDocumentationAvailable._value is sameas true -%}
+    {%- if reuseRestriction.accessRestriction.isDocumentationAvailable._value is sameas false -%}
         {%- do reuseRestriction.accessRestriction.update({
             "noDocumentationAvailableReason": reuseRestrictionItem.accessRestriction.isDocumentationAvailable.noDocumentationAvailableReason|default(None),
         }) -%}
     {%- endif -%}
-    {%- if reuseRestriction.accessRestriction.isMetadataAvailable._value is sameas true -%}
+    {%- if reuseRestriction.accessRestriction.isMetadataAvailable._value is sameas false -%}
         {%- do reuseRestriction.accessRestriction.update({
             "noMetadataAvailableReason": reuseRestrictionItem.accessRestriction.isMetadataAvailable.noMetadataAvailableReason|default(None),
         }) -%}
@@ -1667,68 +1644,70 @@
 
 {# Mapping [Required tools] #}
 {%- do result.dmp.update({'areSpecialToolsRequired': data.obj.areToolsForAccessReuse|default(None)}) -%}
-{%- if result.dmp.areSpecialToolsRequired._value is sameas true -%}
-    {%- for toolItem in data.obj.areToolsForAccessReuse.toolsForAccessReuse -%}
-        {%- set tool = {
-            "name": toolItem.name|default(None),
-            "description": toolItem.description|default(None),
-            "isFreeAndAvailable": toolItem.isFreeAndAvailable|default(None),
-            "noAvailableSolution": None,
-            "hasAccessLink": toolItem.hasAccessLink|default(None),
-            "accessLink": None,
-            "noAccessLinkAlternatives": {},
-            "isAvailableInInstitution": toolItem.isAvailableInInstitution|default(None),
-        } -%}
-        {%- if tool.isFreeAndAvailable._value is sameas false -%}
-            {%- do tool.update({
-                "noAvailableSolution": toolItem.isFreeAndAvailable.noAvailableSolution|default(None),
-            }) -%}
-        {%- endif -%}
-        {%- if tool.hasAccessLink._value is sameas true -%}
-            {%- do tool.update({
-                "accessLink": toolItem.hasAccessLink.accessLink|default(None),
-            }) -%}
-        {%- elif tool.hasAccessLink._value is sameas false -%}
-            {%- do tool.noAccessLinkAlternatives.update({
-                "includesDocumentation": toolItem.hasAccessLink.includesDocumentation|default(None),
-                "noDocumentationReason": None,
-                "includesSoftware": toolItem.hasAccessLink.includesSoftware|default(None),
-            }) -%}
-            {%- if tool.noAccessLinkAlternatives.includesDocumentation._value is sameas false -%}
-                {%- do tool.noAccessLinkAlternatives.update({
-                    "noDocumentationReason": toolItem.hasAccessLink.includesDocumentation.noDocumentationReason|default(None),
+{%- if result.dmp.areSpecialToolsRequired -%}
+    {%- if result.dmp.areSpecialToolsRequired._value is sameas true -%}
+        {%- for toolItem in data.obj.areToolsForAccessReuse.toolsForAccessReuse -%}
+            {%- set tool = {
+                "name": toolItem.name|default(None),
+                "description": toolItem.description|default(None),
+                "isFreeAndAvailable": toolItem.isFreeAndAvailable|default(None),
+                "noAvailableSolution": None,
+                "hasAccessLink": toolItem.hasAccessLink|default(None),
+                "accessLink": None,
+                "noAccessLinkAlternatives": {},
+                "isAvailableInInstitution": toolItem.isAvailableInInstitution|default(None),
+            } -%}
+            {%- if tool.isFreeAndAvailable._value is sameas false -%}
+                {%- do tool.update({
+                    "noAvailableSolution": toolItem.isFreeAndAvailable.noAvailableSolution|default(None),
                 }) -%}
             {%- endif -%}
-        {%- endif -%}
+            {%- if tool.hasAccessLink._value is sameas true -%}
+                {%- do tool.update({
+                    "accessLink": toolItem.hasAccessLink.accessLink|default(None),
+                }) -%}
+            {%- elif tool.hasAccessLink._value is sameas false -%}
+                {%- do tool.noAccessLinkAlternatives.update({
+                    "includesDocumentation": toolItem.hasAccessLink.includesDocumentation|default(None),
+                    "noDocumentationReason": None,
+                    "includesSoftware": toolItem.hasAccessLink.includesSoftware|default(None),
+                }) -%}
+                {%- if tool.noAccessLinkAlternatives.includesDocumentation._value is sameas false -%}
+                    {%- do tool.noAccessLinkAlternatives.update({
+                        "noDocumentationReason": toolItem.hasAccessLink.includesDocumentation.noDocumentationReason|default(None),
+                    }) -%}
+                {%- endif -%}
+            {%- endif -%}
 
-        {# what datasets? #}
-        {%- if toolItem.isForAllDatasets._value is sameas true -%}
-            {# Assign this tool to all datasets #}
-            {%- for dataset in result.dmp.datasets -%}
-                {%- do dataset.tools.append(tool) -%}
-            {%- endfor -%}
-            {%- for consideredDataset in result.dmp.reusingData.consideredDatasets -%}
-                {%- if consideredDataset.reusedData -%}
-                    {%- do consideredDataset.reusedData.tools.append(tool) -%}
-                {%- endif -%}
-            {%- endfor -%}
-        {%- elif toolItem.isForAllDatasets._value is sameas false -%}
-            {# Assign this tool to related datasets #}
-            {%- for relatedDatasetItem in toolItem.isForAllDatasets.relatedDatasets -%}
-                {%- if relatedDatasetItem.typeOfDataset._value == "relatedProducedDatasets" -%}
-                    {%- if relatedDatasetItem.typeOfDataset.relatedProducedDataset and relatedDatasetItem.typeOfDataset.relatedProducedDataset._uuid in datasetsMap -%}
-                        {%- do datasetsMap[relatedDatasetItem.typeOfDataset.relatedProducedDataset._uuid].tools.append(tool) -%}
+            {# what datasets? #}
+            {%- if toolItem.isForAllDatasets._value is sameas true -%}
+                {# Assign this tool to all datasets #}
+                {%- for dataset in result.dmp.datasets -%}
+                    {%- do dataset.tools.append(tool) -%}
+                {%- endfor -%}
+                {%- for consideredDataset in result.dmp.reusingData.consideredDatasets -%}
+                    {%- if consideredDataset.reusedData -%}
+                        {%- do consideredDataset.reusedData.tools.append(tool) -%}
                     {%- endif -%}
-                {%- elif relatedDatasetItem.typeOfDataset._value == "relatedReusedDatasets" -%}
-                    {%- if relatedDatasetItem.typeOfDataset.relatedReusedDataset and relatedDatasetItem.typeOfDataset.relatedReusedDataset._uuid in reusedDatasetsMap -%}
-                        {%- do reusedDatasetsMap[relatedDatasetItem.typeOfDataset.relatedReusedDataset._uuid].reusedData.tools.append(tool) -%}
+                {%- endfor -%}
+            {%- elif toolItem.isForAllDatasets._value is sameas false -%}
+                {# Assign this tool to related datasets #}
+                {%- for relatedDatasetItem in toolItem.isForAllDatasets.relatedDatasets -%}
+                    {%- if relatedDatasetItem.typeOfDataset._value == "relatedProducedDatasets" -%}
+                        {%- if relatedDatasetItem.typeOfDataset.relatedProducedDataset and relatedDatasetItem.typeOfDataset.relatedProducedDataset._uuid in datasetsMap -%}
+                            {%- do datasetsMap[relatedDatasetItem.typeOfDataset.relatedProducedDataset._uuid].tools.append(tool) -%}
+                        {%- endif -%}
+                    {%- elif relatedDatasetItem.typeOfDataset._value == "relatedReusedDatasets" -%}
+                        {%- if relatedDatasetItem.typeOfDataset.relatedReusedDataset and relatedDatasetItem.typeOfDataset.relatedReusedDataset._uuid in reusedDatasetsMap -%}
+                            {%- do reusedDatasetsMap[relatedDatasetItem.typeOfDataset.relatedReusedDataset._uuid].reusedData.tools.append(tool) -%}
+                        {%- endif -%}
                     {%- endif -%}
-                {%- endif -%}
-            {%- endfor -%}
-        {%- endif -%}
-    {%- endfor -%}
-{%- elif data.obj.areToolsForAccessReuse._value is sameas false -%}
-    {%- do result.dmp.update({'noSpecialToolsReason': data.obj.areToolsForAccessReuse.noToolsForAccessReuseReason|default(None)}) -%}
+                {%- endfor -%}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- elif data.obj.areToolsForAccessReuse._value is sameas false -%}
+        {%- do result.dmp.update({'noSpecialToolsReason': data.obj.areToolsForAccessReuse.noToolsForAccessReuseReason|default(None)}) -%}
+    {%- endif -%}
 {%- endif -%}
 
 {# Mapping [Other outputs] #}

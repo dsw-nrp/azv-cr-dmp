@@ -28,10 +28,17 @@
             {%- endif -%}
             {%- if unprovided|length > 0 -%}
                 {%- set ns.all_provided = false -%}
-                {%- set _ = ns.datasets_unprovided.append({
-                    'name': dataset.name._value if dataset.name else "(dataset name not given)",
+                {%- if dataset.name and dataset.name._raw and dataset.name._raw.name -%}
+                    {%- set _ = ns.datasets_unprovided.append({
+                    'name': dataset.name._raw.name,
                     'unprovided': unprovided
                 }) -%}
+                {%- else -%}
+                    {%- set _ = ns.datasets_unprovided.append({
+                        'name': dataset.name._value if dataset.name else "(dataset name not given)",
+                        'unprovided': unprovided
+                    }) -%}
+                {%- endif -%}
             {%- endif -%}
         {%- endfor -%}
 

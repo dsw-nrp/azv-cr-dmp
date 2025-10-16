@@ -55,7 +55,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 html, body {
-  height: 100%;
   padding: 1em;
 }
 
@@ -257,45 +256,16 @@ dl .contact-name {
 /* Style for the floating note */
 .footnote {
   display: inline-block;
-  margin-left: 8px;
+  margin-left: 2px;
   cursor: pointer;
   position: relative;
   font-size: 16px; /* Larger icon */
   color: #0073e6; /* Blue color */
   text-decoration: none;
   z-index: 1; /* Lower z-index for the icon */
-}
-
-/* Change color on hover */
-.footnote:hover {
-  color: #005bb5; /* Darker blue on hover */
-  transform: scale(1.2); /* Scale the icon on hover */
-}
-
-/* Tooltip (the floating note) */
-.footnote::after {
-  content: attr(data-url);
-  display: none;
-  position: absolute;
-  left: 0;
-  top: 24px;
-  transform: translateX(-50%); /* Center the tooltip above the icon */
-  background: #ffffff;
-  color: black;
-  padding: 5px 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  font-size: 12px;
-  white-space: nowrap;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-  z-index: 999; /* Make sure the tooltip is above everything */
-  pointer-events: none; /* Prevent interactions with the tooltip background */
-}
-
-/* Show the tooltip when hovering over the icon */
-.footnote:hover::after {
-  display: block;
-  pointer-events: auto; /* Allow interaction when hovered */
+  text-decoration: none;
+  font-size: 0.8em; 
+  vertical-align: 0.2em; 
 }
 
 /* Validation warning box */

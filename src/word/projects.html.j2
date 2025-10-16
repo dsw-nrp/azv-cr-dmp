@@ -15,15 +15,38 @@
           <dt>Acronym</dt>
           <dd>{{ project.acronym._value if project.acronym else "N/A" }}</dd>
           <dt>Start date</dt>
-          <dd>{{ project.start_date._value if project.start_date else "N/A" }}</dd>
+          <dd>{{ project.startDate._value if project.startDate else "N/A" }}</dd>
           <dt>End date</dt>
-          <dd>{{ project.end_date._value if project.end_date else "N/A" }}</dd>
+          <dd>{{ project.endDate._value if project.endDate else "N/A" }}</dd>
           <dt>Funding</dt>
           <dd>
             {%- if project.fundings|length > 0 %}
               <ul>
-              {%- for funding in project.fundings %}
-                <li>{{ macros.integrationValue(funding.name) if funding.name else "(funding name not given)" }}: {{ funding.grantId._value if funding.grantId else "grant identification number not yet given" }} ({{ funding.status._value if funding.status else "status not yet given" }})</li>
+              {%- for funding in project.fundings -%}
+                <li>
+                  {% if funding.funder %}
+                    {%- if funding.funder._raw -%}
+                    <a href="{{ funding.funder._raw.uri }}" target="_blank" rel="noopener">{{ funding.funder._raw.name }}</a>{{ macros.linkQuestion(funding.funder._path) }}
+                    {%- else -%}
+                    {{ funding.funder._value }}{{ macros.linkQuestion(funding.funder._path) }}
+                    {%- endif -%}
+                  {% else %}
+                  no funder given
+                  {% endif %}
+                  : 
+                  {% if funding.grantId %}
+                  {{ funding.grantId._value }}{{ macros.linkQuestion(funding.grantId._path) }}
+                  {% else %}
+                  no grant number given
+                  {% endif %}
+                  (
+                  {% if funding.status %}
+                  {{ funding.status._value }}{{ macros.linkQuestion(funding.status._path)}}
+                  {% else %}
+                  status is unknown
+                  {% endif %}
+                  )
+                </li>
               {%- endfor %}
               </ul>
             {%- else -%}

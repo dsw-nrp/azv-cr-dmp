@@ -10,12 +10,21 @@
     <ul>
     {%- for policy in data.dmp.policies -%}
         <li>
-            <strong>{{ policy.name._value if policy.name._value else "(no name given)" }}</strong>:
-            {% if policy.url %}
-            <strong><a href="{{ policy.url._value }}" target="_blank">{{ policy.url._value }}</a></strong>
+            {% if policy.name %}
+            <strong>{{ policy.name._value }}</strong>:{{ macros.linkQuestion(policy.name._path) }}
+            {% else %}<strong>no name given</strong>
             {% endif %}
-            <br>{{ policy.description._value if policy.description._value else "(no description given)" }}
-            {% if policy.scope%}<br>Scope: <em>{{ policy.scope._value }}</em>{% endif %}
+            {% if policy.url %}
+            <strong><a href="{{ policy.url._value }}" target="_blank">{{ policy.url._value }}</a></strong>{{ macros.linkQuestion(policy.url._path) }}
+            {% endif %}
+            {% if policy.description._value %}
+              <br>{{ policy.description._value }}{{ macros.linkQuestion(policy.description._path) }}
+            {% else %}
+              <br>(no description given)
+            {% endif %}
+            {% if policy.scope|length > 0 %}
+              <br>Scope: {{ policy.scope | map(attribute='_label') | map('lower') | join(', ') }}{{ macros.linkQuestion(policy.scope[0]._path) }}
+            {% endif %}
         </li>
         {%- endfor -%}
     </ul>

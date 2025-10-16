@@ -24,6 +24,15 @@ Contribute to the document template by adding new information, refining existing
 
 ## Changelog
 
+### 0.0.2
+
+*Released*: 2025-16-10
+
+* Initial version for testing and further development
+* Updated Object in compliance with RDA DCS document template
+* Include links form generated text to related questions
+* Updated the required compatible KM version to 0.1.6
+
 ### 0.0.1
 
 *Released*: 2025-24-07
