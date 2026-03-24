@@ -35,3 +35,48 @@
     <a href="{{ctx.config.clientUrl}}/projects/{{ctx.questionnaire.uuid}}?questionPath={{questionPath}}" class="footnote" title="Question linked to this text" target="_blank" rel="noopener noreferrer">❓</a>
   {%- endif -%}
 {%- endmacro -%}
+
+{# Including detection of URL identifier from FAIRsharing #}
+{%- macro formatIdentifier(identifier) -%}
+  {%- if identifier.type._raw and identifier.value._value -%}
+    <em><a href="{{ identifier.type._raw.homepage }}" target="_blank">{{ identifier.type._raw.abbreviation }}</a></em>:
+    {%- if identifier.type._raw.urlPattern %}
+      <a href="{{ identifier.type._raw.urlPattern | replace("{$id}", identifier.value._value) }}" target="_blank">{{ identifier.type._raw.urlPattern | replace("{$id}", identifier.value._value) }}</a>{{ linkQuestion(identifier.value._path) }}
+    {%- elif identifier.type._raw.id == 709 %}
+      <a href="{{ identifier.value._value }}" target="_blank">{{ identifier.value._value }}</a>{{ linkQuestion(identifier.value._path) }}
+    {%- else %}
+      {{ identifier.value._value }}{{ linkQuestion(identifier.value._path) }}
+    {%- endif -%}
+  {%- else -%}
+    <em>{{ identifier.type._value if identifier.type._value else "no type of identifier given" }}: {{ identifier.value._value if identifier.value._value else "no value given" }}</em>
+  {%- endif -%}
+{%- endmacro -%}
+
+{% macro datasetIntro(sharedResource, contextPhrase, allDatasets) -%}
+  {%- if sharedResource.isPlanned._value is sameas true -%}
+    <p>This {{ contextPhrase }} is <em>planned</em>, and no datasets are currently associated with it.</p>
+  {%- elif sharedResource.usedBy | length == allDatasets | length -%}
+    <p>
+      The same {{ contextPhrase }} applies to all datasets.
+    </p>
+
+  {% elif sharedResource.usedBy | length > 0 %}
+    {% set datasets = [] %}
+    {% for datasetUuid in sharedResource.usedBy %}
+      {% set ds = allDatasets | selectattr('uuid', 'equalto', datasetUuid) | first %}
+      {% if ds %}
+        {% if ds.name %}
+          {% do datasets.append('<strong>' ~ ds.name._value ~ '</strong>' ~ linkQuestion(ds.name._path)) %}
+        {% else %}
+          {% do datasets.append('<strong>(no name)</strong>') %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {% set datasetText = datasets | join(", ") | safe %}
+    {%- if datasets | length > 1 -%}
+      <p>This {{ contextPhrase }} applies to the following datasets: {{ datasetText }}.</p>
+    {%- elif datasets | length == 1 -%}
+      <p>This {{ contextPhrase }} applies to the following dataset: {{ datasetText }}.</p>
+    {%- endif -%}
+  {%- endif -%}
+{%- endmacro %}

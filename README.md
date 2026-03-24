@@ -24,6 +24,21 @@ Contribute to the document template by adding new information, refining existing
 
 ## Changelog
 
+### 0.1.0
+
+*Released*: 2026-24-03
+
+* Initial version for testing and further development
+* Update content to deduplicate shared information across all datasets
+* Improve Other outputs chapter
+* Update identifiers of data and reused data to include value and type of identifier
+* Update FAIRsharing integration
+* Set default project for contributor (if not set, the contributor will be assigned to the first project in the list)
+* Update metamodel version to 17.1
+* Update service links, names and logos
+* Remove object-reference file
+* Updated the required compatible KM version to 0.2.0
+
 ### 0.0.2
 
 *Released*: 2025-16-10
