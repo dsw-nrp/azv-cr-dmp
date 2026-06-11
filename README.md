@@ -37,7 +37,7 @@ Contribute to the document template by adding new information, refining existing
 
 ### 0.1.0
 
-*Released*: 2026-24-03
+*Released*: 2026-03-24
 
 * Initial version for testing and further development
 * Update content to deduplicate shared information across all datasets
@@ -52,7 +52,7 @@ Contribute to the document template by adding new information, refining existing
 
 ### 0.0.2
 
-*Released*: 2025-16-10
+*Released*: 2025-10-16
 
 * Initial version for testing and further development
 * Updated Object in compliance with RDA DCS document template
@@ -61,6 +61,6 @@ Contribute to the document template by adding new information, refining existing
 
 ### 0.0.1
 
-*Released*: 2025-24-07
+*Released*: 2025-07-24
 
 * Initial version for testing and further development
