@@ -14,16 +14,18 @@
             {%- if n > 1 -%}<li style="margin-bottom: 2em;">{%- else -%}<div style="margin-bottom: 2em;">{%- endif -%}
 
             {{ macros.datasetIntro(collection, "data collection process", data.dmp.datasets) }}
-                {%- if collection.isSensitiveDataCollection._value is sameas true -%}
-                    {%- if collection.sensitiveDataCollection.isPersonalDataCollection._value is sameas true -%}
+                {%- if collection.isSensitiveDataCollection and collection.isSensitiveDataCollection._value is sameas true -%}
+                    {%- set sensitiveColl = collection.sensitiveDataCollection -%}
+                    {%- if sensitiveColl.isPersonalDataCollection and sensitiveColl.isPersonalDataCollection._value is sameas true -%}
+                        {%- set personalDataColl = sensitiveColl.personalDataCollection -%}
                         <p>This data collection process involves the processing of personal data
-                        {%- if collection.sensitiveDataCollection.personalDataCollection.purpose %}
-                            for the following purpose: {{ collection.sensitiveDataCollection.personalDataCollection.purpose._value }}.{{ macros.linkQuestion(collection.sensitiveDataCollection.personalDataCollection.purpose._path) }}
-                        {%- else -%}.{{ macros.linkQuestion(collection.sensitiveDataCollection.isPersonalDataCollection._path) }}
+                        {%- if personalDataColl.purpose %}
+                            for the following purpose: {{ personalDataColl.purpose._value|markdown }}{{ macros.linkQuestion(personalDataColl.purpose._path) }}
+                        {%- else -%}.{{ macros.linkQuestion(sensitiveColl.isPersonalDataCollection._path) }}
                         {%- endif -%}
-                        {%- if collection.sensitiveDataCollection.personalDataCollection.isFullyAnonymized._value is sameas true %}
+                        {%- if personalDataColl.isFullyAnonymized and personalDataColl.isFullyAnonymized._value is sameas true %}
                             The dataset is fully anonymized
-                            {%- set processes = collection.sensitiveDataCollection.personalDataCollection.anonymizationProcess.anonymizationProcessTechniques -%}
+                            {%- set processes = personalDataColl.anonymizationProcess.anonymizationProcessTechniques -%}
                             {%- if processes and processes|length > 0 -%}
                                 , using the following anonymization process{{ "es" if processes|length > 1 else "" }}:
                                 <ul>
@@ -31,31 +33,32 @@
                                     <li>{{ process._label }}{{ macros.linkQuestion(process._path) }}</li>
                                 {%- endfor -%}
                                 </ul>
-                            {%- else -%}.{{ macros.linkQuestion(collection.sensitiveDataCollection.personalDataCollection.isFullyAnonymized._path) }}
+                            {%- else -%}.{{ macros.linkQuestion(personalDataColl.isFullyAnonymized._path) }}
                             {%- endif -%}
-                        {%- elif collection.sensitiveDataCollection.personalDataCollection.isFullyAnonymized._value is sameas false -%}
-                            {%- if collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.isPseudonymized._value is sameas true %}
-                                The data is not fully anonymized but it is pseudonymized.{{ macros.linkQuestion(collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.isPseudonymized._path) }}
-                            {%- elif collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.isPseudonymized._value is sameas false -%}
-                                The data is not fully anonymized nor pseudonymized{% if collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.noPseudonymizationReason %}, because {{ collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.noPseudonymizationReason._value }}{{ macros.linkQuestion(collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.noPseudonymizationReason._path) }}{% else %}.{{ macros.linkQuestion(collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData.isPseudonymized._path) }}{% endif %}
+                        {%- elif personalDataColl.isFullyAnonymized and personalDataColl.isFullyAnonymized._value is sameas false -%}
+                            {%- if personalDataColl.nonAnonymizedData.isPseudonymized and personalDataColl.nonAnonymizedData.isPseudonymized._value is sameas true %}
+                                The data is not fully anonymized but it is pseudonymized.{{ macros.linkQuestion(personalDataColl.nonAnonymizedData.isPseudonymized._path) }}
+                            {%- elif personalDataColl.nonAnonymizedData.isPseudonymized and personalDataColl.nonAnonymizedData.isPseudonymized._value is sameas false -%}
+                                The data is not fully anonymized nor pseudonymized{% if personalDataColl.nonAnonymizedData.noPseudonymizationReason %}, because {{ personalDataColl.nonAnonymizedData.noPseudonymizationReason._value }}{{ macros.linkQuestion(personalDataColl.nonAnonymizedData.noPseudonymizationReason._path) }}{% else %}.{{ macros.linkQuestion(personalDataColl.nonAnonymizedData.isPseudonymized._path) }}{% endif %}
+                            {%- endif -%}
                         {%- endif -%}
 
                         {# Other Safeguards, incl transfer outside EU #}
-                        {%- set nonAnonymizedDataset = collection.sensitiveDataCollection.personalDataCollection.nonAnonymizedData -%}
+                        {%- set nonAnonymizedDataset = personalDataColl.nonAnonymizedData -%}
                         <p>
                         {%- if nonAnonymizedDataset.dataProcessingSafeguards and nonAnonymizedDataset.dataProcessingSafeguards|length > 0 -%}
                         
                             {%- set safeguardsList = nonAnonymizedDataset.dataProcessingSafeguards %}
                             The processing of these data is subject to the following estabilished technical and organizational safeguards: {{ safeguardsList| map(attribute="_label")| join(", ") }}.{{ macros.linkQuestion(safeguardsList[0]._path) }}
                         {%- endif -%}
-                        {%- if nonAnonymizedDataset.isTransferOutsideEu._value is sameas true %}
+                        {%- if nonAnonymizedDataset.isTransferOutsideEu and nonAnonymizedDataset.isTransferOutsideEu._value is sameas true %}
                             The data are intended to be transferred outside the European Union.{{ macros.linkQuestion(nonAnonymizedDataset.isTransferOutsideEu._path) }}
-                            {%- if nonAnonymizedDataset.transferOutsideEuProtectionProcess._value %}
-                                The following additional safeguards will be implemented: {{ nonAnonymizedDataset.transferOutsideEuProtectionProcess._value }}.{{ macros.linkQuestion(nonAnonymizedDataset.transferOutsideEuProtectionProcess._path) }}
+                            {%- if nonAnonymizedDataset.transferOutsideEuProtectionProcess and nonAnonymizedDataset.transferOutsideEuProtectionProcess._value %}
+                                The following additional safeguards will be implemented: {{ nonAnonymizedDataset.transferOutsideEuProtectionProcess._value|markdown }}{{ macros.linkQuestion(nonAnonymizedDataset.transferOutsideEuProtectionProcess._path) }}
                             {%- else %}
                                 No specific details about additional protection measures are available yet.
                             {%- endif -%}
-                        {%- elif nonAnonymizedDataset.isTransferOutsideEu._value is sameas false %}
+                        {%- elif nonAnonymizedDataset.isTransferOutsideEu and nonAnonymizedDataset.isTransferOutsideEu._value is sameas false %}
                             No transfer of these data outside the European Union is planned.{{ macros.linkQuestion(nonAnonymizedDataset.isTransferOutsideEu._path) }}
                         {%- endif -%}
                         </p>
@@ -63,27 +66,26 @@
                         <p>We are collecting sensitive data.{{ macros.linkQuestion(collection.sensitiveDataCollection.isPersonalDataCollection._path) }}</p>
                     {%- endif -%}
                 {%- endif -%}
-                {%- if collection.sensitiveDataCollection.isOtherSensitiveDataCollection._value is sameas true -%}
+                {%- if collection.sensitiveDataCollection and collection.sensitiveDataCollection.isOtherSensitiveDataCollection and collection.sensitiveDataCollection.isOtherSensitiveDataCollection._value is sameas true -%}
                     {%- set otherSensitiveData = collection.sensitiveDataCollection.otherSensitiveDataCollection -%}
                     <p>This data collection process involves sensitive data that do not constitute personal data.{{ macros.linkQuestion(collection.sensitiveDataCollection.isOtherSensitiveDataCollection._path) }}
                         {%- if otherSensitiveData.typeOfSensitiveData %}
-                            The category of sensitive data is: {{ otherSensitiveData.typeOfSensitiveData._value }}.{{ macros.linkQuestion(otherSensitiveData.typeOfSensitiveData._path) }}
+                            The category of sensitive data is: {{ otherSensitiveData.typeOfSensitiveData._value|markdown }}{{ macros.linkQuestion(otherSensitiveData.typeOfSensitiveData._path) }}
                         {%- endif -%}
                         {%- if otherSensitiveData.securityMeasures and otherSensitiveData.securityMeasures|length > 0 %}
                             The following security measure{{ "s are" if otherSensitiveData.securityMeasures|length > 1 else " is" }} implemented:
                             <ul>
                             {%- for measure in otherSensitiveData.securityMeasures %}
                                 <li>
-                                {{ measure.name._value if measure.name._value else "(no name given)" }}{% if measure.description._value %}: {{ measure.description._value }}{% endif %}{{ macros.linkQuestion(measure._path) }}
+                                {{ measure.name._value if measure.name and measure.name._value else "(no name given)" }}{% if measure.description._value %}: {{ measure.description._value|markdown }}{% endif %}{{ macros.linkQuestion(measure._path) }}
                                 </li>
                             {%- endfor %}
                             </ul>
                         {%- endif -%}
                     </p>
+                {%- elif collection.isSensitiveDataCollection and collection.isSensitiveDataCollection._value is sameas false -%}
+                    <p>This data collection process does not involve the processing of sensitive data.{{ macros.linkQuestion(collection.isSensitiveDataCollection._path) }}</p>
                 {%- endif -%}
-            {%- elif collection.isSensitiveDataCollection._value is sameas false -%}
-                <p>This data collection process does not involve the processing of sensitive data.{{ macros.linkQuestion(collection.isSensitiveDataCollection._path) }}</p>
-            {%- endif -%}
             {%- if n > 1 -%}</li>{%- else -%}</div>{%- endif -%}
         {% endfor %}
         {%- if n > 1 -%}</ul>{%- endif -%}
@@ -130,7 +132,7 @@
                     {%- endif -%}
                     </p>
                 {%- elif processingEnv.isSharedWorkingSpace._value is sameas false -%}
-                    {%- if processingEnv.isCustomWorkingSpaceSecure._value is sameas true -%}
+                    {%- if processingEnv.isCustomWorkingSpaceSecure and processingEnv.isCustomWorkingSpaceSecure._value is sameas true -%}
                         <p>We will not use a shared workspace; instead, project participants will use separate environments that are protected against both equipment failure and human error.{{ macros.linkQuestion(processingEnv.isCustomWorkingSpaceSecure._path) }}</p>
                     {%- endif -%}
                 {%- endif -%}
@@ -138,20 +140,20 @@
 
             {# Information loss, validation impact #}
             {% set impactSentences = {
-                'zero': "negligible",
-                'low': "acceptably low",
-                'medium': "moderate",
+                'zero': "zero",
+                'low': "negligible",
+                'medium': "acceptably low",
                 'high': "significant"
             } %}
             {% set impacts = [] %}
 
-            {% if processingEnv.informationLostImpact._value in impactSentences %}
+            {% if processingEnv.informationLostImpact and processingEnv.informationLostImpact._value in impactSentences %}
                 {% set _ = impacts.append(impactSentences[processingEnv.informationLostImpact._value] ~ " if information is lost" ~ macros.linkQuestion(processingEnv.informationLostImpact._path)) %}
             {% endif %}
-            {% if processingEnv.informationLeakImpact._value in impactSentences %}
+            {% if processingEnv.informationLeakImpact and processingEnv.informationLeakImpact._value in impactSentences %}
                 {% set _ = impacts.append(impactSentences[processingEnv.informationLeakImpact._value] ~ " if information is leaked" ~ macros.linkQuestion(processingEnv.informationLeakImpact._path)) %}
             {% endif %}
-            {% if processingEnv.informationVandalizedImpact._value in impactSentences %}
+            {% if processingEnv.informationVandalizedImpact and processingEnv.informationVandalizedImpact._value in impactSentences %}
                 {% set _ = impacts.append(impactSentences[processingEnv.informationVandalizedImpact._value] ~ " if information is vandalized" ~ macros.linkQuestion(processingEnv.informationVandalizedImpact._path)) %}
             {% endif %}
 
@@ -178,24 +180,24 @@
             {{ macros.datasetIntro(preservationStrategy, "data preservation strategy", data.dmp.datasets) }}
 
             {# Cold Storage during project #}
-            {%- if preservationStrategy.usesLongTermStorageDuringProject._value is sameas true -%}
+            {%- if preservationStrategy.usesLongTermStorageDuringProject and preservationStrategy.usesLongTermStorageDuringProject._value is sameas true -%}
                 {%- set storage = preservationStrategy.longTermStorageDuringProject -%}
                 <p>We will use long-term storage during the project.{{macros.linkQuestion(preservationStrategy.usesLongTermStorageDuringProject._path)}}
-                {%- if storage.isArchiveStoredRemotely._value is sameas true %}
+                {%- if storage.isArchiveStoredRemotely and storage.isArchiveStoredRemotely._value is sameas true %}
                     The archive will be stored in a remote location to protect the data against disasters.{{ macros.linkQuestion(storage.isArchiveStoredRemotely._path) }}
                 {%- endif -%}
-                {%- if storage.isArchiveSecurityProvided._value is sameas true %}
+                {%- if storage.isArchiveSecurityProvided and storage.isArchiveSecurityProvided._value is sameas true %}
                     The archive needs to be protected against loss or theft.{{ macros.linkQuestion(storage.isArchiveSecurityProvided._path) }}
                     {%- if storage.archiveSecurity -%}
                         {%- set archiveSecurity = storage.archiveSecurity -%}
                         {%- set details = [] %}
-                        {%- if archiveSecurity.isEncrypted._value is sameas true %}
+                        {%- if archiveSecurity.isEncrypted and archiveSecurity.isEncrypted._value is sameas true %}
                             {%- set _ = details.append("is encrypted" ~ macros.linkQuestion(archiveSecurity.isEncrypted._path)) %}
                         {%- endif %}
-                        {%- if archiveSecurity.isKeyAccessClearlyDefined._value is sameas true %}
+                        {%- if archiveSecurity.isKeyAccessClearlyDefined and archiveSecurity.isKeyAccessClearlyDefined._value is sameas true %}
                             {%- set _ = details.append("key access is clearly defined" ~ macros.linkQuestion(archiveSecurity.isKeyAccessClearlyDefined._path)) %}
                         {%- endif %}
-                        {%- if archiveSecurity.isPhysicalArchiveAccessDefined._value is sameas true %}
+                        {%- if archiveSecurity.isPhysicalArchiveAccessDefined and archiveSecurity.isPhysicalArchiveAccessDefined._value is sameas true %}
                             {%- set _ = details.append("physical access to the archive is clearly defined" ~ macros.linkQuestion(archiveSecurity.isPhysicalArchiveAccessDefined._path)) %}
                         {%- endif %}
                         {%- if details %}
@@ -212,18 +214,18 @@
                         {%- endif %}
                     {%- endif -%}
                 {%- endif -%}
-                {%- if storage.isArchiveAccessDecided._value is sameas true -%}
-                    {%- if storage.archiveAccess.isRestoreRequesterDefined._value is sameas true %}
+                {%- if storage.isArchiveAccessDecided and storage.isArchiveAccessDecided._value is sameas true -%}
+                    {%- if storage.archiveAccess.isRestoreRequesterDefined and storage.archiveAccess.isRestoreRequesterDefined._value is sameas true %}
                         It is established who can request data restoration from the archive.{{ macros.linkQuestion(storage.archiveAccess.isRestoreRequesterDefined._path) }}
                     {%- endif -%}
                 {%- endif -%}
                 </p>
-            {%- elif preservationStrategy.usesLongTermStorageDuringProject._value is sameas false -%}
+            {%- elif preservationStrategy.usesLongTermStorageDuringProject and preservationStrategy.usesLongTermStorageDuringProject._value is sameas false -%}
                 {%- set noStorage = preservationStrategy.noLongTermStorageDuringProject -%}
                 <p>We will not use long-term storage during the project
-                {%- if noStorage.canRegenerateOriginalData._value is sameas true %}
+                {%- if noStorage.canRegenerateOriginalData and noStorage.canRegenerateOriginalData._value is sameas true %}
                     and we can regenerate the original data if needed.{{ macros.linkQuestion(noStorage.canRegenerateOriginalData._path) }}
-                {%- elif noStorage.canRegenerateOriginalData._value is sameas false %}
+                {%- elif noStorage.canRegenerateOriginalData and noStorage.canRegenerateOriginalData._value is sameas false %}
                     and we cannot regenerate the original data if needed.{{ macros.linkQuestion(noStorage.canRegenerateOriginalData._path) }}
                 {%- else -%}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageDuringProject._path)}}
                 {%- endif -%}
@@ -235,8 +237,8 @@
     {%- endif -%}
 
     {# Repository #}
-    {%- if data.dmp.sharedResources.repositories | length > 0 -%}
-        <p>Details about the repositories used for sharing the data are in Section 2.2</p>
+    {%- if data.dmp.sharedResources.dataStores|length > 0 -%}
+        <p>Details about the repositories used for sharing the data are in Section 2.2. (Making data accessible).</p>
     {%- endif -%}
     </div>
 </div>

@@ -16,7 +16,7 @@
 
   <div class="info">
     <div class="version-info">
-      {% for version in dc.qtn.versions if version.uuid == dc.qtn.version %}
+      {% for version in dc.project.versions if version.uuid == dc.project.version %}
         <div class="version">{{version.name}}</div>
       {% endfor %}
       <div class="date">{{ data.meta.document.createdAt|datetime_format("%d %B %Y") }}</div>

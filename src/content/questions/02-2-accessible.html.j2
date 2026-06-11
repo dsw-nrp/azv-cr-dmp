@@ -14,18 +14,20 @@
             <strong>(no name given)</strong>
         {%- endif -%}
         {# If will be published #}
-        {%- if dataset.willBePublished._value is sameas true -%}
-            {%- if dataset.isPublished._value is sameas true %} (published){{ macros.linkQuestion(dataset.isPublished._path) }}
-            {%- elif dataset.isPublished._value is sameas false %} (will be published){{ macros.linkQuestion(dataset.isPublished._path) }}
-            {%- endif -%}
-        {%- elif dataset.willBePublished._value is sameas false %}
-            (will not be published){{ macros.linkQuestion(dataset.willBePublished._path) }}
-        {%- endif -%}:
+        {%- if dataset.willBePublished -%}
+            {%- if dataset.willBePublished._value is sameas true -%}
+                {%- if dataset.isPublished and dataset.isPublished._value is sameas true %} (published){{ macros.linkQuestion(dataset.isPublished._path) }}
+                {%- else %} (will be published){{ macros.linkQuestion(dataset.isPublished._path) }}
+                {%- endif -%}
+            {%- elif dataset.willBePublished._value is sameas false %}
+                (will not be published){{ macros.linkQuestion(dataset.willBePublished._path) }}
+            {%- endif -%}:
+        {%- endif -%}
         {# Identifiers #}
         {%- if dataset.metadata -%}
             {%- set metadata = data.dmp.sharedResources.metadataSpecifications | selectattr("uuid", "equalto", dataset.metadata) | first -%}
-            {%- if metadata.usesPids._value is sameas true -%}
-                {%- if metadata.whoProvidesPids._value -%}
+            {%- if metadata.usesPids and metadata.usesPids._value is sameas true -%}
+                {%- if metadata.whoProvidesPids and metadata.whoProvidesPids._value -%}
                     <p>
                     {%- if metadata.whoProvidesPids._value == "project" -%}
                         A persistent identifier (PID) for this dataset will be assigned by the project’s data steward or principal investigator.
@@ -36,12 +38,12 @@
                     {%- elif metadata.whoProvidesPids._value == "provider" -%}
                         A persistent identifier (PID) for this dataset will be assigned by the national or international PID service provider.
                     {%- else -%}
-                        A persistent identifier (PID) for this dataset will be assigned by {{ metadata.whoProvidesPids._value }}.
+                        A persistent identifier (PID) for this dataset will be assigned by {{ metadata.whoProvidesPids._value }}
                     {%- endif -%}
                     {{ macros.linkQuestion(metadata.whoProvidesPids._path) }}
                     </p>
                 {%- endif -%}
-            {%- elif metadata.usesPids._value is sameas false -%}
+            {%- elif metadata.usesPids and metadata.usesPids._value is sameas false -%}
                 <p>A persistent identifier (PID) for this dataset will not be assigned.{{ macros.linkQuestion(metadata.usesPids._path) }}</p>
             {%- endif -%}
         {%- endif -%}
@@ -57,7 +59,7 @@
                         <strong>(no distribution name given)</strong>
                     {%- endif -%}
                     {# Sharing mode #}
-                    {%- if distribution.technicalAvailability.accessMode -%}
+                    {%- if distribution.technicalAvailability and distribution.technicalAvailability.accessMode -%}
                         {%- if distribution.technicalAvailability.accessMode._value == "open" %}
                             will be shared openly (available to anyone){{ macros.linkQuestion(distribution.technicalAvailability.accessMode._path) }}.
                         {%- elif distribution.technicalAvailability.accessMode._value == "shared" %}
@@ -69,17 +71,17 @@
                     {# When published? #}
                     {%- if distribution.whenAvailable -%}
                         <p>
-                        {%- if distribution.whenAvailable.isAvailableImmediately._value is sameas true %}
+                        {%- if distribution.whenAvailable.isAvailableImmediately and distribution.whenAvailable.isAvailableImmediately._value is sameas true %}
                             This distribution will be published as soon as possible after it has been collected.{{ macros.linkQuestion(distribution.whenAvailable.isAvailableImmediately._path) }}
-                        {%- elif distribution.whenAvailable.isAvailableImmediately._value is sameas false -%}
+                        {%- elif distribution.whenAvailable.isAvailableImmediately and distribution.whenAvailable.isAvailableImmediately._value is sameas false -%}
                             {%- set postponedAvailability = distribution.whenAvailable.postponedAvailability %}
                             This distribution will not be available immediately after it has been collected.{{ macros.linkQuestion(distribution.whenAvailable.isAvailableImmediately._path) }}
-                            {%- if postponedAvailability.isExactStartDateKnown._value is sameas true and postponedAvailability.exactStartDate._value %}
+                            {%- if postponedAvailability.isExactStartDateKnown and postponedAvailability.isExactStartDateKnown._value is sameas true and postponedAvailability.exactStartDate and postponedAvailability.exactStartDate._value %}
                                 It will be available starting from {{ postponedAvailability.exactStartDate._value }}.{{ macros.linkQuestion(postponedAvailability.exactStartDate._path) }}
-                            {%- elif postponedAvailability.isExactStartDateKnown._value is sameas false and postponedAvailability.availabilityDelayAfterProjectEnd._value %}
+                            {%- elif postponedAvailability.isExactStartDateKnown and postponedAvailability.isExactStartDateKnown._value is sameas false and postponedAvailability.availabilityDelayAfterProjectEnd and postponedAvailability.availabilityDelayAfterProjectEnd._value %}
                                 It will be available {{ postponedAvailability.availabilityDelayAfterProjectEnd._value }} after the end of the project.{{ macros.linkQuestion(postponedAvailability.availabilityDelayAfterProjectEnd._path) }}
                             {%- endif -%}
-                            {%- if postponedAvailability.isEmbargoPeriod._value is sameas true %}
+                            {%- if postponedAvailability.isEmbargoPeriod and postponedAvailability.isEmbargoPeriod._value is sameas true %}
                                 There will be an embargo period{{ macros.linkQuestion(postponedAvailability.isEmbargoPeriod._path) }}
                                     {%- if postponedAvailability.embargoPeriod.durationEmbargoPeriod._value %}
                                         of {{ postponedAvailability.embargoPeriod.durationEmbargoPeriod._value }}{{ macros.linkQuestion(postponedAvailability.embargoPeriod.durationEmbargoPeriod._path) }}
@@ -87,7 +89,7 @@
                                     {%- if postponedAvailability.embargoPeriod.reason._value %}
                                         (reason: {{ postponedAvailability.embargoPeriod.reason._value }}){{ macros.linkQuestion(postponedAvailability.embargoPeriod.reason._path) }}
                                     {%- endif -%}.
-                            {%- elif postponedAvailability.isEmbargoPeriod._value is sameas false and postponedAvailability.noEmbargoReasonForPostponedAvailability._value %}
+                            {%- elif postponedAvailability.isEmbargoPeriod and postponedAvailability.isEmbargoPeriod._value is sameas false and postponedAvailability.noEmbargoReasonForPostponedAvailability._value %}
                                 There is no embargo period; the postponed availability is due to: {{ postponedAvailability.noEmbargoReasonForPostponedAvailability._value }}{{ macros.linkQuestion(postponedAvailability.noEmbargoReasonForPostponedAvailability._path) }}.
                             {%- endif -%}
                         {%- else %}
@@ -99,55 +101,59 @@
                     {# Free and Standard Protocol #}
                     {%- if distribution.technicalAvailability -%}
                         {%- set technicalAvailability = distribution.technicalAvailability -%}
-                        {%- if technicalAvailability.isAccessibleViaStandardProtocol._value is sameas true -%}
-                            <p>This distribution will be accessible via a standard protocol{{ macros.linkQuestion(technicalAvailability.isAccessibleViaStandardProtocol._path) }}
-                            {%- if technicalAvailability.usedStandardProtocol._value %} ({{ technicalAvailability.usedStandardProtocol._value }}){{ macros.linkQuestion(technicalAvailability.usedStandardProtocol._path) }}
-                            {%- endif -%}.</p>
-                        {%- elif technicalAvailability.isAccessibleViaStandardProtocol._value is sameas false -%}
-                            <p>This distribution will not be accessible via a standard protocol{{ macros.linkQuestion(technicalAvailability.isAccessibleViaStandardProtocol._path) }}
-                            {%- if technicalAvailability.notAccessibleViaStandardProtocolReason._value %} because: {{ technicalAvailability.notAccessibleViaStandardProtocolReason._value }}{{ macros.linkQuestion(technicalAvailability.notAccessibleViaStandardProtocolReason._path) }}{%- endif -%}.</p>
+                        {%- if technicalAvailability.isAccessibleViaStandardProtocol -%}
+                            {%- if technicalAvailability.isAccessibleViaStandardProtocol._value is sameas true -%}
+                                <p>This distribution will be accessible via a standard protocol{{ macros.linkQuestion(technicalAvailability.isAccessibleViaStandardProtocol._path) }}
+                                {%- if technicalAvailability.usedStandardProtocol and technicalAvailability.usedStandardProtocol._value %} ({{ technicalAvailability.usedStandardProtocol._value }}){{ macros.linkQuestion(technicalAvailability.usedStandardProtocol._path) }}
+                                {%- endif -%}.</p>
+                            {%- elif technicalAvailability.isAccessibleViaStandardProtocol._value is sameas false -%}
+                                <p>This distribution will not be accessible via a standard protocol{{ macros.linkQuestion(technicalAvailability.isAccessibleViaStandardProtocol._path) }}
+                                {%- if technicalAvailability.notAccessibleViaStandardProtocolReason and technicalAvailability.notAccessibleViaStandardProtocolReason._value %} because: {{ technicalAvailability.notAccessibleViaStandardProtocolReason._value }}{{ macros.linkQuestion(technicalAvailability.notAccessibleViaStandardProtocolReason._path) }}{%- endif -%}.</p>
+                            {%- endif -%}
                         {%- endif -%}
                     {%- endif -%}
 
                     {# Licenses #}
                     <p>
-                    {%- if distribution.isLicenseAssignedForDistribution._value is sameas true -%}
-                        {%- if distribution.licensing.isLicenseChosen._value is sameas true and distribution.licensing.licenses|length > 0 -%}
-                            The distribution will be available under the following {{ "licenses" if licensesItems|length > 1 else "license" }}:
-                            <ul>
-                            {%- for license in distribution.licensing.licenses -%}
-                                <li>
-                                    {%- if license.license._raw -%}
-                                        <strong>{{ license.license._raw.name }}</strong>{{ macros.linkQuestion(license.license._path) }}
-                                    {%- elif license.license -%}
-                                        <strong>{{ license.license._value }}</strong>{{ macros.linkQuestion(license.license._path) }}
-                                    {%- else -%}
-                                        <strong>(no name given):</strong>
-                                    {%- endif -%}
-                                    {%- if license.startDate -%}
-                                        <br>Start date: {{ license.startDate._value }}{{ macros.linkQuestion(license.startDate._path) }}
-                                    {%- endif -%}
-                                </li>
-                            {%- endfor -%}
-                            </ul>
+                    {%- if distribution.isLicenseAssignedForDistribution -%}
+                        {%- if distribution.isLicenseAssignedForDistribution._value is sameas true -%}
+                            {%- if distribution.licensing.isLicenseChosen and distribution.licensing.isLicenseChosen._value is sameas true and distribution.licensing.licenses|length > 0 -%}
+                                The distribution will be available under the following {{ "licenses" if licensesItems|length > 1 else "license" }}:
+                                <ul>
+                                {%- for license in distribution.licensing.licenses -%}
+                                    <li>
+                                        {%- if license.license._raw -%}
+                                            <strong>{{ license.license._raw.name }}</strong>{{ macros.linkQuestion(license.license._path) }}
+                                        {%- elif license.license -%}
+                                            <strong>{{ license.license._value }}</strong>{{ macros.linkQuestion(license.license._path) }}
+                                        {%- else -%}
+                                            <strong>(no license given):</strong>
+                                        {%- endif -%}
+                                        {%- if license.startDate -%}
+                                            <br>Start date: {{ license.startDate._value }}{{ macros.linkQuestion(license.startDate._path) }}
+                                        {%- endif -%}
+                                    </li>
+                                {%- endfor -%}
+                                </ul>
 
-                        {%- elif distribution.licensing.isLicenseChosen._value is sameas false %}
-                            No license has been selected for this distribution yet.{{ macros.linkQuestion(distribution.licensing.isLicenseChosen._path) }}
-                            {%- if distribution.licensing.notYetDecidedLicense -%}
-                                {%- if distribution.licensing.notYetDecidedLicense.isOpenLicense._value is sameas true %}
-                                    We intend to use an open license for this distribution.{{ macros.linkQuestion(distribution.licensing.notYetDecidedLicense.isOpenLicense._path) }}
-                                    {%- if distribution.licensing.notYetDecidedLicense.licenseBasedOnLicenseSelector %}
-                                        We have used the License Selector tool to help us decide, and as a result, we are considering the following license: {{ distribution.licensing.notYetDecidedLicense.licenseBasedOnLicenseSelector._value }}.{{ macros.linkQuestion(distribution.licensing.notYetDecidedLicense.licenseBasedOnLicenseSelector._path) }}
+                            {%- elif distribution.licensing.isLicenseChosen and distribution.licensing.isLicenseChosen._value is sameas false %}
+                                No license has been selected for this distribution yet.{{ macros.linkQuestion(distribution.licensing.isLicenseChosen._path) }}
+                                {%- if distribution.licensing.notYetDecidedLicense -%}
+                                    {%- if distribution.licensing.notYetDecidedLicense.isOpenLicense._value is sameas true %}
+                                        We intend to use an open license for this distribution.{{ macros.linkQuestion(distribution.licensing.notYetDecidedLicense.isOpenLicense._path) }}
+                                        {%- if distribution.licensing.notYetDecidedLicense.licenseBasedOnLicenseSelector %}
+                                            We have used the License Selector tool to help us decide, and as a result, we are considering the following license: {{ distribution.licensing.notYetDecidedLicense.licenseBasedOnLicenseSelector._value }}.{{ macros.linkQuestion(distribution.licensing.notYetDecidedLicense.licenseBasedOnLicenseSelector._path) }}
+                                        {%- endif -%}
+                                    {%- elif distribution.licensing.notYetDecidedLicense.isOpenLicense._value is sameas false %}
+                                        We do not plan to use an open license for this distribution{{ macros.linkQuestion(distribution.licensing.notYetDecidedLicense._path) }} {%- if distribution.licensing.notYetDecidedLicense.noOpenLicenseReason %} because: {{ distribution.licensing.notYetDecidedLicense.noOpenLicenseReason._value }}.{{ macros.linkQuestion(distribution.licensing.notYetDecidedLicense.noOpenLicenseReason._path) }}{%- else -%}.{%- endif -%}
                                     {%- endif -%}
-                                {%- elif distribution.licensing.notYetDecidedLicense.isOpenLicense._value is sameas false %}
-                                    We do not plan to use an open license for this distribution{{ macros.linkQuestion(distribution.licensing.notYetDecidedLicense._path) }} {%- if distribution.licensing.notYetDecidedLicense.noOpenLicenseReason %} because: {{ distribution.licensing.notYetDecidedLicense.noOpenLicenseReason._value }}.{{ macros.linkQuestion(distribution.licensing.notYetDecidedLicense.noOpenLicenseReason._path) }}{%- else -%}.{%- endif -%}
                                 {%- endif -%}
+                            {%- else -%}
+                                We plan to assign a license to this distribution, but it has not been specified yet.{{ macros.linkQuestion(distribution.licensing.isLicenseChosen._path) }}
                             {%- endif -%}
-                        {%- else -%}
-                            We plan to assign a license to this distribution, but it has not been specified yet.{{ macros.linkQuestion(distribution.licensing.isLicenseChosen._path) }}
+                        {%- elif distribution.isLicenseAssignedForDistribution._value is sameas false -%}
+                            No license specified for this distribution.{{ macros.linkQuestion(distribution.isLicenseAssignedForDistribution._path) }}
                         {%- endif -%}
-                    {%- elif distribution.isLicenseAssignedForDistribution._value is sameas false -%}
-                        No license specified for this distribution.{{ macros.linkQuestion(distribution.isLicenseAssignedForDistribution._path) }}
                     {%- endif -%}
                     </p>
                 </li>
@@ -186,7 +192,7 @@
                 {{ type._label|lower }}{{ ", " if not loop.last else "" }}
             {%- endfor -%}) {% endif %}
 
-        {%- if dataStorage.usedBy | length > 0 -%}
+        {%- if dataStorage.usedBy|length > 0 -%}
             <p>This repository will be used to share the following distributions:</p>
             <ul>
             {%- for distributionUuid in dataStorage.usedBy -%}
@@ -213,7 +219,7 @@
         {%- if dataStorage.storage.isCertified or dataStorage.storage.supportsVersioning  -%}
             <p>The repository
             {% if dataStorage.storage.isCertified._value is sameas true %}
-                is certified{{ macros.linkQuestion(dataStorage.storage.certification._path) }}{%- if dataStorage.storage.certification %} ({{ dataStorage.storage.certification._label }}){{ macros.linkQuestion(dataStorage.storage.certification._path) }}{%- endif -%}
+                is certified{{ macros.linkQuestion(dataStorage.storage.certification._path) }}{%- if dataStorage.storage.certification %} ({{ dataStorage.storage.certification._label if dataStorage.storage.certification._label else dataStorage.storage.certification._value }}){{ macros.linkQuestion(dataStorage.storage.certification._path) }}{%- endif -%}
             {% elif dataStorage.storage.isCertified._value is sameas false %}
                 is not certified{{ macros.linkQuestion(dataStorage.storage.certification._path) }}
             {%- endif -%}
@@ -234,9 +240,9 @@
             It uses the following persistent identifier system{% if dataStorage.storage.pidSystems|length > 1 %}s{% endif %}: {{ macros.linkQuestion(dataStorage.storage.pidSystems[0]._path) }}
             <em>
             {%- for pidSystemItem in dataStorage.storage.pidSystems -%}
-                {%- if pidSystemItem.pidSystem._raw -%}
+                {%- if pidSystemItem.pidSystem and pidSystemItem.pidSystem._raw -%}
                     <a href="{{ pidSystemItem.pidSystem._raw.homepage }}" target="_blank">{{ pidSystemItem.pidSystem._raw.name }}</a>
-                {%- elif pidSystemItem.pidSystem._value -%}
+                {%- elif pidSystemItem.pidSystem and pidSystemItem.pidSystem._value -%}
                     {{ pidSystemItem.pidSystem._value }}
                 {%- else -%}
                     (no name given)
@@ -244,22 +250,22 @@
                 {{ ", " if not loop.last else "" }} 
             {%- endfor -%}
             </em>
-            {%- if dataStorage.storage.resolvablePid._value is sameas true %}
+            {%- if dataStorage.storage.resolvablePid and dataStorage.storage.resolvablePid._value is sameas true %}
                 with resolvable persistent identifiers.{{ macros.linkQuestion(dataStorage.storage.resolvablePid._path) }}
-            {%- elif dataStorage.storage.resolvablePid._value is sameas false %}
+            {%- elif dataStorage.storage.resolvablePid and dataStorage.storage.resolvablePid._value is sameas false %}
                 but does not use resolvable persistent identifiers.{{ macros.linkQuestion(dataStorage.storage.resolvablePid._path) }}
             {%- else -%}.
             {% endif %}
         {% else %}
-            {% if dataStorage.storage.resolvablePid._value is sameas true %}
+            {% if dataStorage.storage.resolvablePid and dataStorage.storage.resolvablePid._value is sameas true %}
                 It supports resolvable persistent identifiers.{{ macros.linkQuestion(dataStorage.storage.resolvablePid._path) }}
-            {% elif dataStorage.storage.resolvablePid._value is sameas false %}
+            {% elif dataStorage.storage.resolvablePid and dataStorage.storage.resolvablePid._value is sameas false %}
                 It does not support resolvable persistent identifiers.{{ macros.linkQuestion(dataStorage.storage.resolvablePid._path) }}
             {% endif %}
         {% endif %}
 
         {# Repository requirements #}
-        {%- if dataStorage.agreementOnStorageInfrastructureUse._value -%}
+        {%- if dataStorage.agreementOnStorageInfrastructureUse and dataStorage.agreementOnStorageInfrastructureUse._value -%}
             Accessing and using the hosting infrastructure may require following steps and agreements: {{ dataStorage.agreementOnStorageInfrastructureUse._value }}.{{ macros.linkQuestion(dataStorage.agreementOnStorageInfrastructureUse._path) }}
         {%- endif -%}
 
@@ -285,7 +291,7 @@
             {%- set accessRestriction = reuseRestriction.accessRestriction -%}
 
             {# Ownership #}
-            {%- if accessRestriction.dataRightsArrangement._value -%}
+            {%- if accessRestriction.dataRightsArrangement -%}
                 <p>
                 {%- if accessRestriction.dataRightsArrangement._value == "no_copyrightable" -%}
                     The data are not subject to copyright; therefore, no rightsholder exists.
@@ -296,7 +302,7 @@
                 {%- elif accessRestriction.dataRightsArrangement._value == "intellectual_property" -%}
                     A consortium agreement governs the intellectual property arrangements.
                 {%- elif accessRestriction.dataRightsArrangement._value -%}
-                    The following arrangements have been made regarding data ownership: {{ accessRestriction.dataRightsArrangement._value }}
+                    The following arrangements have been made regarding data ownership: {{ accessRestriction.dataRightsArrangement._value|markdown }}
                 {%- endif -%}
                 {{ macros.linkQuestion(accessRestriction.dataRightsArrangement._path) }}</p>
             {%- else -%}
@@ -304,14 +310,14 @@
             {%- endif -%}
 
             {# Open philosophy  #}
-            {%- if accessRestriction.asOpenAsPossibleApproach._value is sameas true -%}
+            {%- if accessRestriction.asOpenAsPossibleApproach and accessRestriction.asOpenAsPossibleApproach._value is sameas true -%}
                 <p>This dataset follows the principle of being as <em>open as possible</em>.{{ macros.linkQuestion(accessRestriction.asOpenAsPossibleApproach._path) }}</p>
             {%- endif -%}
 
             {# Can open data #}
-            {%- if accessRestriction.canDataOpen._value is sameas true -%}
+            {%- if accessRestriction.canDataOpen and accessRestriction.canDataOpen._value is sameas true -%}
                 <p>This dataset may become fully open over time.{{ macros.linkQuestion(accessRestriction.canDataOpen._path) }}</p>
-            {%- elif accessRestriction.canDataOpen._value is sameas false -%}
+            {%- elif accessRestriction.canDataOpen and accessRestriction.canDataOpen._value is sameas false -%}
                 {%- set dataCannotOpen = accessRestriction.dataCannotOpen -%}
                 {%- set legalReasons = dataCannotOpen.isLegalReason._value -%}
                 {%- set businessReasons = dataCannotOpen.isBusinessReason._value -%}
@@ -388,10 +394,10 @@
                 {%- endif -%}
 
                 {# Data Access #}
-                {%- if dataCannotOpen.isAccessProcessDefined._value is sameas true -%}
+                {%- if dataCannotOpen.isAccessProcessDefined and dataCannotOpen.isAccessProcessDefined._value is sameas true -%}
                     <p>
                         {%- set accessProcess = dataCannotOpen.accessProcess -%}
-                    The data access procedure is defined{% if accessProcess.description %} as follows: {{ accessProcess.description._value }}.{{ macros.linkQuestion(dataCannotOpen.accessProcess.description._path) }}{% else -%}.{{ macros.linkQuestion(dataCannotOpen.isAccessProcessDefined._path) }}{% endif %}
+                    The data access procedure is defined{% if accessProcess.description %} as follows: {{ accessProcess.description._value|markdown }}{{ macros.linkQuestion(dataCannotOpen.accessProcess.description._path) }}{% else -%}.{{ macros.linkQuestion(dataCannotOpen.isAccessProcessDefined._path) }}{% endif %}
                         {%- if accessProcess.timeFrame._value %}
                             The process will take place within {{ accessProcess.timeFrame._value }}.{{ macros.linkQuestion(dataCannotOpen.accessProcess.timeFrame._path) }}
                         {%- endif -%}
@@ -412,12 +418,12 @@
                 {%- endif -%}
                 {%- if dataCannotOpen.collaboratorAccessProcess -%}
                     <p>
-                        For collaborators within the {{globals.projects}}, the access process is defined as follows: {{ dataCannotOpen.collaboratorAccessProcess._value }}.{{ macros.linkQuestion(dataCannotOpen.collaboratorAccessProcess._path) }}
+                        For collaborators within the {{globals.projects}}, the access process is defined as follows: {{ dataCannotOpen.collaboratorAccessProcess._value|markdown }}{{ macros.linkQuestion(dataCannotOpen.collaboratorAccessProcess._path) }}
                     </p>
                 {%- endif -%}
 
                 {%- if legalReasons -%}
-                    {%- if dataCannotOpen.legalReason.isAuthenticatedAccess._value is sameas true -%}
+                    {%- if dataCannotOpen.legalReason.isAuthenticatedAccess and dataCannotOpen.legalReason.isAuthenticatedAccess._value is sameas true -%}
                         <p>
                         Concerning the legal reasons, an authenticated access will be required.{{ macros.linkQuestion(dataCannotOpen.legalReason.isAuthenticatedAccess._path) }}
                         {%- if dataCannotOpen.legalReason.authenticatedAccess.authenticationProcess -%}
@@ -426,17 +432,17 @@
                             {%- elif dataCannotOpen.legalReason.authenticatedAccess.authenticationProcess._value == "sso" %}
                                 Single Sign-On (SSO) will be used for authentication.
                             {%- elif dataCannotOpen.legalReason.authenticatedAccess.authenticationProcess %}
-                                Other authentication process will be used: {{ dataCannotOpen.legalReason.authenticatedAccess.authenticationProcess._value }}.
+                                Authentication of authorized users will be handled through the following process: {{ dataCannotOpen.legalReason.authenticatedAccess.authenticationProcess._value }}.
                             {%- endif -%}
                             {{ macros.linkQuestion(dataCannotOpen.legalReason.authenticatedAccess.authenticationProcess._path) }}
                         {%- endif -%}
-                        {%- if dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value -%}
+                        {%- if dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate -%}
                             {%- if dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value == "project_member" %}
                                 People can apply to one of the project members.
-                            {%- elif dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value == "new_data_access_committe" %}
+                            {%- elif dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value == "new_data_access_committee" %}
                                 People can apply to the data access committee that we will set up.
-                            {%- elif dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value == "existing_data_access_committe" %}
-                                People can apply to {{ "the <em>" ~ dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate.dataAccessCommitte._value ~ "</em>" if dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate.dataAccessCommitte else "existing" }} data access committee.
+                            {%- elif dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate._value == "existing_data_access_committee" %}
+                                People can apply to {{ "the <em>" ~ dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate.dataAccessCommitte._value ~ "</em>" if dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticate.dataAccessCommittee else "existing" }} data access committee.
                             {%- elif dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticateOther %}
                                 For the authorization of potential users, we will make special arrangements{{ ": " ~ dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticateOther._value if dataCannotOpen.legalReason.authenticatedAccess.whoAuthenticateOther  else "." }}
                             {%- endif -%}
@@ -450,26 +456,26 @@
                 {%- endif -%}
 
                 {# Data Sharing Agreement #}
-                {%- if dataCannotOpen.isDataSharingAgreementRequired._value is sameas true -%}
+                {%- if dataCannotOpen.isDataSharingAgreementRequired and dataCannotOpen.isDataSharingAgreementRequired._value is sameas true -%}
                     {%- set dataSharingAgreement = dataCannotOpen.dataSharingAgreement -%}
                     <p>A data sharing agreement will be required for accessing the data{{ macros.linkQuestion(dataCannotOpen.isDataSharingAgreementRequired._path) }}
-                    {%- if dataSharingAgreement.isDefined._value is sameas true %}
+                    {%- if dataSharingAgreement.isDefined and dataSharingAgreement.isDefined._value is sameas true %}
                         (already defined){{ macros.linkQuestion(dataSharingAgreement.isDefined._path) }}
-                    {%- elif dataSharingAgreement.isDefined._value is sameas false  %}
+                    {%- elif dataSharingAgreement.isDefined and dataSharingAgreement.isDefined._value is sameas false  %}
                         (not yet defined){{ macros.linkQuestion(dataSharingAgreement.isDefined._path) }}
                     {%- endif -%}.
-                    {%- if dataSharingAgreement.documentLink._value and dataSharingAgreement.document %}
+                    {%- if dataSharingAgreement.documentLink and dataSharingAgreement.documentLink._value and dataSharingAgreement.document %}
                         The data sharing agreement can be accessed at <a href="{{ dataSharingAgreement.documentLink._value }}" target="_blank">{{ dataSharingAgreement.documentLink._value }}</a> {{ macros.linkQuestion(dataSharingAgreement.documentLink._path) }} or you can download it: {{ macros.downloadUrlFile(dataSharingAgreement.document) }}.{{ macros.linkQuestion(dataSharingAgreement.document._path) }}
-                    {%- elif dataSharingAgreement.documentLink._value %}
+                    {%- elif dataSharingAgreement.documentLink and dataSharingAgreement.documentLink._value %}
                         The data sharing agreement can be accessed at <a href="{{ dataSharingAgreement.documentLink._value }}" target="_blank">{{ dataSharingAgreement.documentLink._value }}</a>.{{ macros.linkQuestion(dataSharingAgreement.documentLink._path) }}
                     {%- elif dataSharingAgreement.document %}
                         You can download the data sharing agreement here: {{ macros.downloadUrlFile(dataSharingAgreement.document) }}.{{ macros.linkQuestion(dataSharingAgreement.document._path) }}
                     {%- endif -%}
-                    {%- if dataSharingAgreement.description._value %}
-                        Summary of the Data Sharing Agreement: {{ dataSharingAgreement.description._value }}.{{ macros.linkQuestion(dataSharingAgreement.description._path) }}
+                    {%- if dataSharingAgreement.description and dataSharingAgreement.description._value %}
+                        Summary of the Data Sharing Agreement: {{ dataSharingAgreement.description._value|markdown }}{{ macros.linkQuestion(dataSharingAgreement.description._path) }}
                     {%- endif -%}
                     </p>
-                {%- elif dataCannotOpen.isDataSharingAgreementRequired._value is sameas false -%}
+                {%- elif dataCannotOpen.isDataSharingAgreementRequired and dataCannotOpen.isDataSharingAgreementRequired._value is sameas false -%}
                     <p>A data sharing agreement will not be required for accessing the data.{{ macros.linkQuestion(dataCannotOpen.isDataSharingAgreementRequired._path) }}</p>
                 {%- endif -%}
             {%- else -%}
@@ -478,29 +484,29 @@
 
             {# Publishing metadata/documentation  #}
             <p>
-            {%- if accessRestriction.isMetadataAvailable._value is sameas true -%}
+            {%- if accessRestriction.isMetadataAvailable and accessRestriction.isMetadataAvailable._value is sameas true -%}
                 Metadata will be openly available for this dataset.{{ macros.linkQuestion(accessRestriction.isMetadataAvailable._path) }}
-            {%- elif accessRestriction.isMetadataAvailable._value is sameas false -%}
+            {%- elif accessRestriction.isMetadataAvailable and accessRestriction.isMetadataAvailable._value is sameas false -%}
                 Metadata will not be available for this dataset{{ macros.linkQuestion(accessRestriction.isMetadataAvailable._path) }}
-                {%- if accessRestriction.isMetadataAvailable.noMetadataAvailableReason._value %} because: {{ accessRestriction.isMetadataAvailable.noMetadataAvailableReason._value }}{{ macros.linkQuestion(accessRestriction.isMetadataAvailable.noMetadataAvailableReason._path) }}
+                {%- if accessRestriction.isMetadataAvailable.noMetadataAvailableReason and accessRestriction.isMetadataAvailable.noMetadataAvailableReason._value %} because: {{ accessRestriction.isMetadataAvailable.noMetadataAvailableReason._value }}{{ macros.linkQuestion(accessRestriction.isMetadataAvailable.noMetadataAvailableReason._path) }}
                 {%- endif -%}.
             {%- else -%}
                 No information provided about metadata availability for this dataset.
             {%- endif -%}
             {%- if data.dmp.sharedResources.metadataSpecifications|length > 0 %}
-                Details about the metadata are provided in the Section 2.1.
+                Details about the metadata are provided in the Section 2.1. (Making data findable, including provisions for metadata).
             {%- endif -%}
-            {%- if accessRestriction.isDocumentationAvailable._value is sameas true %}
+            {%- if accessRestriction.isDocumentationAvailable and accessRestriction.isDocumentationAvailable._value is sameas true %}
                 Documentation will be openly available for this dataset.{{ macros.linkQuestion(accessRestriction.isDocumentationAvailable._path) }}
-            {%- elif accessRestriction.isDocumentationAvailable._value is sameas false %}
+            {%- elif accessRestriction.isDocumentationAvailable and accessRestriction.isDocumentationAvailable._value is sameas false %}
                 Documentation will not be available for this dataset{{ macros.linkQuestion(accessRestriction.isDocumentationAvailable._path) }}
-                {%- if accessRestriction.isDocumentationAvailable.noDocumentationAvailableReason %} because: {{ accessRestriction.isDocumentationAvailable.noDocumentationAvailableReason._value }}{{ macros.linkQuestion(accessRestriction.isDocumentationAvailable.noDocumentationAvailableReason._path) }}
+                {%- if accessRestriction.isDocumentationAvailable.noDocumentationAvailableReason and accessRestriction.isDocumentationAvailable.noDocumentationAvailableReason._value %} because: {{ accessRestriction.isDocumentationAvailable.noDocumentationAvailableReason._value }}{{ macros.linkQuestion(accessRestriction.isDocumentationAvailable.noDocumentationAvailableReason._path) }}
                 {%- endif -%}.
             {%- else %}
                 No information provided about documentation availability for this dataset.
             {%- endif -%}
             {%- if data.dmp.sharedResources.documentationSpecifications|length > 0 %}
-                Details about the documentation are provided in the Section 2.4.
+                Details about the documentation are provided in the Section 2.4. (Increase data re-use).
             {%- endif -%}
             </p>
         {%- if n > 1 -%}</li>{%- else -%}</div>{%- endif -%}
@@ -509,35 +515,35 @@
     {%- endif -%}
 
     {# Tools #}
-    {%- if data.dmp.areSpecialToolsRequired._value is sameas true -%}
+    {%- if data.dmp.areSpecialToolsRequired and data.dmp.areSpecialToolsRequired._value is sameas true -%}
         <h4>Tools required for accessing the data</h4>
         {%- if data.dmp.sharedResources.tools|length > 0 -%}
             <ul>
             {%- for tool in data.dmp.sharedResources.tools -%}
                 <li style="margin-bottom: 2em;">
 
-                <strong>{{ tool.name._value if tool.name._value else "(no name given)" }}</strong>{{ macros.linkQuestion(tool.name._path) }}
-                <br>{{tool.description._value if tool.description._value else "(no description given)"}}{{ macros.linkQuestion(tool.description._path) }}<br>
-                {%- if tool.isFreeAndAvailable._value is sameas true %}
+                <strong>{{ tool.name._value if tool.name else "(no name given)" }}</strong>{{ macros.linkQuestion(tool.name._path) }}
+                <br>{{tool.description._value|markdown if tool.description else "(no description given)"}}{{ macros.linkQuestion(tool.description._path) }}<br>
+                {%- if tool.isFreeAndAvailable and tool.isFreeAndAvailable._value is sameas true %}
                     This tool is free and available for use.{{ macros.linkQuestion(tool.isFreeAndAvailable._path) }}
-                {%- elif tool.isFreeAndAvailable._value is sameas false %}
+                {%- elif tool.isFreeAndAvailable and tool.isFreeAndAvailable._value is sameas false %}
                     This tool is not free and available for use.{{ macros.linkQuestion(tool.isFreeAndAvailable._path) }}
                     {%- if tool.noAvailableSolution %}
                         However, there is an alternative solution that allows omitting this tool: {{tool.noAvailableSolution._value}}.{{ macros.linkQuestion(tool.noAvailableSolution._path) }}
                     {%- endif -%}
                 {%- endif -%}
-                {%- if tool.hasAccessLink._value is sameas true and tool.identifier %}
+                {%- if tool.hasAccessLink and tool.hasAccessLink._value is sameas true and tool.identifier %}
                     This tool can be accessed directly at {{ macros.formatIdentifier(tool.identifier) }}.
-                {%- elif tool.hasAccessLink._value is sameas false %}
+                {%- elif tool.hasAccessLink and tool.hasAccessLink._value is sameas false %}
                     This tool cannot be accessed directly, but it can be obtained through other means.{{ macros.linkQuestion(tool.hasAccessLink._path) }}
-                    {%- if tool.noAccessLinkAlternatives.includesDocumentation._value is sameas true %}
+                    {%- if tool.noAccessLinkAlternatives.includesDocumentation and tool.noAccessLinkAlternatives.includesDocumentation._value is sameas true %}
                         The documentation of this software will be included in the metadata of data set.{{ macros.linkQuestion(tool.noAccessLinkAlternatives.includesDocumentation._path) }}
-                    {%- elif tool.noAccessLinkAlternatives.includesDocumentation._value is sameas false %}
-                        The documentation of this software will not be included in the metadata of this data set{{" because: " ~ tool.noAccessLinkAlternatives.noDocumentationReason._value if tool.noAccessLinkAlternatives.noDocumentationReason else '.'}}{{ macros.linkQuestion(tool.noAccessLinkAlternatives.includesDocumentation._path) }}
+                    {%- elif tool.noAccessLinkAlternatives.includesDocumentation and tool.noAccessLinkAlternatives.includesDocumentation._value is sameas false %}
+                        The documentation of this software will not be included in the metadata of this dataset{{" because: " ~ tool.noAccessLinkAlternatives.noDocumentationReason._value if tool.noAccessLinkAlternatives.noDocumentationReason else '.'}}{{ macros.linkQuestion(tool.noAccessLinkAlternatives.includesDocumentation._path) }}
                     {%- endif -%}
-                    {%- if tool.noAccessLinkAlternatives.includesSoftware._value is sameas true %}
+                    {%- if tool.noAccessLinkAlternatives.includesSoftware and tool.noAccessLinkAlternatives.includesSoftware._value is sameas true %}
                         The software (e.g. in open source code) will be included within the data.{{ macros.linkQuestion(tool.noAccessLinkAlternatives.includesSoftware._path) }}
-                    {%- elif tool.noAccessLinkAlternatives.includesSoftware._value is sameas false %}
+                    {%- elif tool.noAccessLinkAlternatives.includesSoftware and tool.noAccessLinkAlternatives.includesSoftware._value is sameas false %}
                         The software (e.g. in open source code) will not be included within the data.{{ macros.linkQuestion(tool.noAccessLinkAlternatives.includesSoftware._path) }}
                     {%- endif -%}
                 {%- endif -%}
@@ -547,7 +553,7 @@
         {%- else -%}
             <p>No specific tools have been defined.</p>
         {%- endif -%}
-    {%- elif data.dmp.areSpecialToolsRequired._value is sameas false -%}
+    {%- elif data.dmp.areSpecialToolsRequired and data.dmp.areSpecialToolsRequired._value is sameas false -%}
         <p>In our {{ globals.projects}} there are no special tools required to access and use the data{%- if data.dmp.noSpecialToolsReason -%}, because: {{ data.dmp.noSpecialToolsReason._value }}{{ macros.linkQuestion(data.dmp.noSpecialToolsReason._path) }}{%- else -%}{{ macros.linkQuestion(data.dmp.areSpecialToolsRequired._path) }}{% endif -%}.</p>
     {%- else -%}
         <p>It is not specified whether special tools are required to access and use the data in our {{ globals.projects}}.</p>

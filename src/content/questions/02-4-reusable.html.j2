@@ -13,7 +13,7 @@
         {% for collection in data.dmp.sharedResources.collections %}
             {%- if n > 1 -%}<li style="margin-bottom: 2em;">{%- else -%}<div style="margin-bottom: 2em;">{%- endif -%}
             {{ macros.datasetIntro(collection, "quality assurance process", data.dmp.datasets) }}
-            {%- if collection.isEquipmentCollection._value is sameas true -%}
+            {%- if collection.isEquipmentCollection and collection.isEquipmentCollection._value is sameas true -%}
                 {% set equipmentCollection = collection.equipmentCollection %}
                 {# Quality processes #}
                 {% set quality_labels = {
@@ -41,7 +41,7 @@
                 {%- else -%}
                     <p>No specific quality assurance procedures have been outlined for this equipment-based collection.{{ macros.linkQuestion(collection.equipmentCollection.usesQualityProcesses._path) }}</p>
                 {%- endif -%}
-            {%- elif collection.isEquipmentCollection._value is sameas false -%}
+            {%- elif collection.isEquipmentCollection and collection.isEquipmentCollection._value is sameas false -%}
                 <p>This collection process does not involve the use of measuring equipment thus no quality assurance procedures are applied.{{ macros.linkQuestion(collection.isEquipmentCollection._path) }}</p>
             {%- else -%}
                 <p>No information was provided about the use of measuring equipment and related quality assurance procedures in this collection.</p>           
@@ -54,14 +54,16 @@
     {# Validating the integrity of the results #}
     {%- if data.dmp.sharedResources.processingEnvironments | length > 0 -%}
         {%- set n = data.dmp.sharedResources.processingEnvironments | length -%}
-        <h4>Validation of Data Integrity in Processing Environments</h4>
         {%- set envMonitoring = [] -%}
         {%- for env in data.dmp.sharedResources.processingEnvironments -%}
-            {%- if env.isMonitoringIntegrityAfterProcessing._value is sameas true and env.monitoringIntegrityAfterProcessing | length > 0 -%}
+            {%- if env.isMonitoringIntegrityAfterProcessing and env.isMonitoringIntegrityAfterProcessing._value is sameas true and env.monitoringIntegrityAfterProcessing|length > 0 -%}
                 {%- do envMonitoring.append(env) -%}
             {%- endif -%}
         {%- endfor -%}
-        {% if envMonitoring | length > 1 %}
+        {%- if envMonitoring|length > 0 -%}
+            <h4>Validation of Data Integrity in Processing Environments</h4>
+        {%- endif -%}
+        {% if envMonitoring|length > 1 %}
             <p>Within {{ globals.projects }}, multiple validation processes will be applied to ensure the integrity and reliability of the research results.</p>
         {% endif %}
         {%- if n > 1-%}<ul>{%- endif -%}
@@ -70,7 +72,7 @@
                 {{ macros.datasetIntro(env, "process for validating data integrity", data.dmp.datasets) }}
                 <p>
                     The validation procedures implemented within this processing environment include: 
-                    {{ env.monitoringIntegrityAfterProcessing | map(attribute='_label') | map('lower') | join(", ") }}.{{ macros.linkQuestion(env.isMonitoringIntegrityAfterProcessing._path) }}
+                    {{ env.monitoringIntegrityAfterProcessing|map(attribute='_label')|map('lower')|join(", ") }}.{{ macros.linkQuestion(env.isMonitoringIntegrityAfterProcessing._path) }}
                 </p>
             {%- if n > 1 -%}</li>{%- else -%}</div>{%- endif -%}
         {% endfor %}
@@ -78,102 +80,120 @@
     {% endif %}
     
     {# Reuse restrictions #}
-    {%- if data.dmp.sharedResources.reuseRestrictions | length > 0 -%}
-        {%- set n = data.dmp.sharedResources.reuseRestrictions | length -%}
+    {%- if data.dmp.sharedResources.reuseRestrictions|length > 0 -%}
+        {%- set n = data.dmp.sharedResources.reuseRestrictions|length -%}
         <h4>Reuse Restrictions, Ownership and Openness of the Data</h4>
-        {%- if data.dmp.sharedResources.reuseRestrictions | length > 1 -%}
+        {%- if data.dmp.sharedResources.reuseRestrictions|length > 1 -%}
             <p>In our {{ globals.projects }}, there are {{ data.dmp.sharedResources.reuseRestrictions | length }} approaches towards access conditions, ownership and openness of the data, as described below:</p>
         {%- endif -%}
         {%- if n > 1 -%}<ul>{%- endif -%}
         {%- for reuseRestriction in data.dmp.sharedResources.reuseRestrictions -%}
             {%- if n > 1 -%}<li style="margin-bottom: 2em;">{%- else -%}<div style="margin-bottom: 2em;">{%- endif -%}
-            {{ macros.datasetIntro(reuseRestriction, "on access conditions, ownership and openness of the data", data.dmp.datasets) }}
-            {% set numDatasets = reuseRestriction.usedBy | length %}
+            {{ macros.datasetIntro(reuseRestriction, "access conditions, ownership and openness of the data", data.dmp.datasets) }}
+            {% set numDatasets = reuseRestriction.usedBy|length %}
 
             {# Can open data #}
-            {%- if reuseRestriction.accessRestriction.canDataOpen._value is sameas true -%}
-                <p>As described in Section 2.2, the data may become completely open over time.{{ macros.linkQuestion(reuseRestriction.accessRestriction.canDataOpen._path) }}</p>
-            {%- elif reuseRestriction.accessRestriction.canDataOpen._value is sameas false -%}
-                <p>As described in Section 2.2, the data cannot be made completely open.{{ macros.linkQuestion(reuseRestriction.accessRestriction.canDataOpen._path) }}</p>
-                {%- set dataCannotOpen = reuseRestriction.accessRestriction.dataCannotOpen -%}
-                {%- if dataCannotOpen.isLegalReason._value is sameas true -%}
-                    {%- if dataCannotOpen.legalReason.isPrivacyReason._value is sameas true -%}
-                    <p>
-                        {%- if dataCannotOpen.legalReason.privacyReason.locationOfData._value == "no" %}
-                            There are no location-based storage restrictions arising from privacy considerations.{{ macros.linkQuestion(dataCannotOpen.legalReason.privacyReason.locationOfData._path) }}
-                        {%- elif dataCannotOpen.legalReason.privacyReason.locationOfData._value == "eu" %}
-                            Due to privacy considerations, the data must be stored within the European Union.{{ macros.linkQuestion(dataCannotOpen.legalReason.privacyReason.locationOfData._path) }}
-                        {%- elif dataCannotOpen.legalReason.privacyReason.locationOfData._value == "country" %}
-                            Due to privacy considerations, the data must remain within the country of origin.{{ macros.linkQuestion(dataCannotOpen.legalReason.privacyReason.locationOfData._path) }}
-                        {%- elif dataCannotOpen.legalReason.privacyReason.locationOfData._value == "institute" %}
-                            Due to privacy considerations, the data must remain within the hosting institution.{{ macros.linkQuestion(dataCannotOpen.legalReason.privacyReason.locationOfData._path) }}
+            {%- if reuseRestriction.accessRestriction and reuseRestriction.accessRestriction.canDataOpen -%}
+                {%- if reuseRestriction.accessRestriction.canDataOpen._value is sameas true -%}
+                    <p>As described in Section 2.2. (Making data accessible), the data may become completely open over time.{{ macros.linkQuestion(reuseRestriction.accessRestriction.canDataOpen._path) }}</p>
+                {%- elif reuseRestriction.accessRestriction.canDataOpen._value is sameas false -%}
+                    <p>As described in Section 2.2. (Making data accessible), the data cannot be made completely open.{{ macros.linkQuestion(reuseRestriction.accessRestriction.canDataOpen._path) }}</p>
+                    {%- set dataCannotOpen = reuseRestriction.accessRestriction.dataCannotOpen -%}
+                    {%- if dataCannotOpen.isLegalReason and dataCannotOpen.isLegalReason._value is sameas true -%}
+                        {%- if dataCannotOpen.legalReason.isPrivacyReason and dataCannotOpen.legalReason.isPrivacyReason._value is sameas true -%}
+                        <p>
+                            {%- if dataCannotOpen.legalReason.privacyReason.locationOfData -%}
+                                {%- if dataCannotOpen.legalReason.privacyReason.locationOfData._value == "no" %}
+                                    There are no location-based storage restrictions arising from privacy considerations.{{ macros.linkQuestion(dataCannotOpen.legalReason.privacyReason.locationOfData._path) }}
+                                {%- elif dataCannotOpen.legalReason.privacyReason.locationOfData._value == "eu" %}
+                                    Due to privacy considerations, the data must be stored within the European Union.{{ macros.linkQuestion(dataCannotOpen.legalReason.privacyReason.locationOfData._path) }}
+                                {%- elif dataCannotOpen.legalReason.privacyReason.locationOfData._value == "country" %}
+                                    Due to privacy considerations, the data must remain within the country of origin.{{ macros.linkQuestion(dataCannotOpen.legalReason.privacyReason.locationOfData._path) }}
+                                {%- elif dataCannotOpen.legalReason.privacyReason.locationOfData._value == "institute" %}
+                                    Due to privacy considerations, the data must remain within the hosting institution.{{ macros.linkQuestion(dataCannotOpen.legalReason.privacyReason.locationOfData._path) }}
+                                {%- endif -%}
+                        
+                                {%- set privacyCanUse = [] -%}
+                                {%- set privacyCannotUse = [] -%}
+                                {%- set privacyReason = dataCannotOpen.legalReason.privacyReason -%}
+                                {%- if privacyReason.howToMoreOpen -%}
+                                    {%- if privacyReason.howToMoreOpen.pseudonymization -%}
+                                        {%- if privacyReason.howToMoreOpen.pseudonymization._value is sameas false -%}
+                                            {%- do privacyCannotUse.append("pseudonymization") -%}
+                                        {%- elif privacyReason.howToMoreOpen.pseudonymization._value is sameas true -%}
+                                            {%- do privacyCanUse.append("pseudonymization") -%}
+                                        {%- endif -%}
+                                    {%- endif -%}
+                                    {%- if privacyReason.howToMoreOpen.anonymization -%}
+                                        {%- if privacyReason.howToMoreOpen.anonymization._value is sameas false -%}
+                                            {%- do privacyCannotUse.append("anonymization") -%}
+                                        {%- elif privacyReason.howToMoreOpen.anonymization._value is sameas true -%}
+                                            {%- do privacyCanUse.append("anonymization") -%}
+                                        {%- endif -%}
+                                    {%- endif -%}
+                                    {%- if privacyReason.howToMoreOpen.aggregation -%}
+                                        {%- if privacyReason.howToMoreOpen.aggregation._value is sameas false -%}
+                                            {%- do privacyCannotUse.append("data aggregation") -%}
+                                        {%- elif privacyReason.howToMoreOpen.aggregation._value is sameas true -%}
+                                            {%- do privacyCanUse.append("data aggregation") -%}
+                                        {%- endif -%}
+                                    {%- endif -%}
+                                {%- endif -%}
+
+                                {%- if privacyCanUse|length == 1 %}
+                                    We can use {{privacyCanUse[0]}} to make the data more openly available.
+                                {%- elif privacyCanUse|length == 2 %}
+                                    We can use {{privacyCanUse[0]}} and {{privacyCanUse[1]}} to make the data more openly available.
+                                {%- elif privacyCanUse|length == 3 %}
+                                    We can use {{privacyCanUse[0]}}, {{privacyCanUse[1]}}, and {{privacyCanUse[2]}} to make the data more openly available.
+                                {%- endif -%}
+
+                                {%- set privacyCannotUseStart = "We cannot use" if privacyCanUse|length == 0 else "But we cannot use" -%}
+                                {%- if privacyCannotUse|length == 1 %}
+                                    {{privacyCannotUseStart}} {{privacyCannotUse[0]}} to make the data more openly available.
+                                {%- elif privacyCannotUse|length == 2 %}
+                                    {{privacyCannotUseStart}} neither {{privacyCannotUse[0]}} nor {{privacyCannotUse[1]}} to make the data more openly available.
+                                {%- elif privacyCannotUse|length == 3 %}
+                                    {{privacyCannotUseStart}} neither {{privacyCannotUse[0]}} nor {{privacyCannotUse[1]}}, nor {{privacyCannotUse[2]}} to make the data more openly available.
+                                {%- endif -%}
+
+                                {%- if privacyReason.howToMoreOpen.pseudonymization -%}
+                                    {%- if privacyReason.howToMoreOpen.pseudonymization._value is sameas true -%}
+                                        {%- if privacyReason.howToMoreOpen.useThirdPartyForPseudonymization and privacyReason.howToMoreOpen.useThirdPartyForPseudonymization._value is sameas false %}
+                                            For pseudonymization purposes, no trusted third party will be engaged.{{ macros.linkQuestion(privacyReason.howToMoreOpen.useThirdPartyForPseudonymization._path) }}
+                                        {%- elif privacyReason.howToMoreOpen.useThirdPartyForPseudonymization and privacyReason.howToMoreOpen.useThirdPartyForPseudonymization._value is sameas true %}
+                                            For pseudonymization purposes, a trusted third party may be engaged.{{ macros.linkQuestion(privacyReason.howToMoreOpen.useThirdPartyForPseudonymization._path) }}
+                                        {%- endif -%}
+                                    {%- endif -%}
+                                {%- endif -%}
+                            {%- endif -%}
+                        </p>
                         {%- endif -%}
 
-                        {%- set privacyCanUse = [] -%}
-                        {%- set privacyCannotUse = [] -%}
-                        {%- set privacyReason = dataCannotOpen.legalReason.privacyReason -%}
-                        {%- if privacyReason.howToMoreOpen.pseudonymization._value is sameas false -%}
-                            {%- do privacyCannotUse.append("pseudonymization") -%}
-                        {%- elif privacyReason.howToMoreOpen.pseudonymization._value is sameas true -%}
-                            {%- do privacyCanUse.append("pseudonymization") -%}
-                        {%- endif -%}
-                        {%- if privacyReason.howToMoreOpen.anonymization._value is sameas false -%}
-                            {%- do privacyCannotUse.append("anonymization") -%}
-                        {%- elif privacyReason.howToMoreOpen.anonymization._value is sameas true -%}
-                            {%- do privacyCanUse.append("anonymization") -%}
-                        {%- endif -%}
-                        {%- if privacyReason.howToMoreOpen.aggregation._value is sameas false -%}
-                            {%- do privacyCannotUse.append("data aggregation") -%}
-                        {%- elif privacyReason.howToMoreOpen.aggregation._value is sameas true -%}
-                            {%- do privacyCanUse.append("data aggregation") -%}
-                        {%- endif -%}
-
-                        {%- if privacyCanUse|length == 1 %}
-                            We can use {{privacyCanUse[0]}} to make the data more openly available.
-                        {%- elif privacyCanUse|length == 2 %}
-                            We can use {{privacyCanUse[0]}} and {{privacyCanUse[1]}} to make the data more openly available.
-                        {%- elif privacyCanUse|length == 3 %}
-                            We can use {{privacyCanUse[0]}}, {{privacyCanUse[1]}}, and {{privacyCanUse[2]}} to make the data more openly available.
-                        {%- endif -%}
-
-                        {%- set privacyCannotUseStart = "We cannot use" if privacyCanUse|length == 0 else "But we cannot use" -%}
-                        {%- if privacyCannotUse|length == 1 %}
-                            {{privacyCannotUseStart}} {{privacyCannotUse[0]}} to make the data more openly available.
-                        {%- elif privacyCannotUse|length == 2 %}
-                            {{privacyCannotUseStart}} neither {{privacyCannotUse[0]}} nor {{privacyCannotUse[1]}} to make the data more openly available.
-                        {%- elif privacyCannotUse|length == 3 %}
-                            {{privacyCannotUseStart}} neither {{privacyCannotUse[0]}} nor {{privacyCannotUse[1]}}, nor {{privacyCannotUse[2]}} to make the data more openly available.
-                        {%- endif -%}
-
-                        {%- if privacyReason.howToMoreOpen.pseudonymization._value is sameas true -%}
-                            {%- if privacyReason.howToMoreOpen.useThirdPartyForPseudonymization._value is sameas false %}
-                                For pseudonymization purposes, no trusted third party will be engaged.{{ macros.linkQuestion(privacyReason.howToMoreOpen.useThirdPartyForPseudonymization._path) }}
-                            {%- elif privacyReason.howToMoreOpen.useThirdPartyForPseudonymization._value is sameas true %}
-                                For pseudonymization purposes, a trusted third party may be engaged.{{ macros.linkQuestion(privacyReason.howToMoreOpen.useThirdPartyForPseudonymization._path) }}
+                        {# Access to private data - leave out, complete access is described in Section 2.2 #}
+                        {%- if dataCannotOpen.legalReason.isAuthorizedAccess -%}
+                            {%- if dataCannotOpen.legalReason.isAuthenticatedAccess._value is sameas true -%}
+                                <p>The procedure governing authorized access to the data is described in Section 2.2. (Making data accessible).{{ macros.linkQuestion(dataCannotOpen.legalReason.isAuthenticatedAccess._path) }}</p>
                             {%- endif -%}
                         {%- endif -%}
-                    </p>
-                    {%- endif -%}
 
-                    {# Access to private data - leave out, complete access is described in Section 2.2 #}
-                    {%- if dataCannotOpen.legalReason.isAuthenticatedAccess._value is sameas true -%}
-                        <p>The procedure governing authorized access to the data is described in Section 2.2.{{ macros.linkQuestion(dataCannotOpen.legalReason.isAuthenticatedAccess._path) }}</p>
-                    {%- endif -%}
-
-                    {# Intellectual Property #}
-                    {%- if dataCannotOpen.legalReason.isIntellectualPropertyReason._value is sameas true -%}
-                    <p>
-                        {%- set intellectualPropertyReason = dataCannotOpen.legalReason.intellectualPropertyReason %}
-                        There are intellectual property reasons why our data cannot be open.{{ macros.linkQuestion(dataCannotOpen.legalReason.isIntellectualPropertyReason._path) }}
-                        {%- if intellectualPropertyReason.isOwnershipOfDataDefined._value is sameas true %}
-                            It is clear who owns data and documents.{{ macros.linkQuestion(intellectualPropertyReason.isOwnershipOfDataDefined._path) }}
+                        {# Intellectual Property #}
+                        {%- if dataCannotOpen.legalReason.isIntellectualPropertyReason -%}
+                            {%- if dataCannotOpen.legalReason.isIntellectualPropertyReason._value is sameas true -%}
+                            <p>
+                                {%- set intellectualPropertyReason = dataCannotOpen.legalReason.intellectualPropertyReason %}
+                                There are intellectual property reasons why our data cannot be open.{{ macros.linkQuestion(dataCannotOpen.legalReason.isIntellectualPropertyReason._path) }}
+                                {%- if intellectualPropertyReason.isOwnershipOfDataDefined and intellectualPropertyReason.isOwnershipOfDataDefined._value is sameas true %}
+                                    It is clear who owns data and documents.{{ macros.linkQuestion(intellectualPropertyReason.isOwnershipOfDataDefined._path) }}
+                                {%- endif -%}
+                                {%- if intellectualPropertyReason.isDecisionPowerOfMovingDataDefined and intellectualPropertyReason.isDecisionPowerOfMovingDataDefined._value is sameas true %}
+                                    Someone will be given the decision power to move documents or data to a new place after the {{globals.projects}} has finished.{{ macros.linkQuestion(intellectualPropertyReason.isDecisionPowerOfMovingDataDefined._path) }}
+                                {%- endif -%}
+                            </p>
+                            {%- elif  dataCannotOpen.legalReason.isIntellectualPropertyReason._value is sameas false %}
+                                <p>There are no intellectual property reasons why our data cannot be open.{{ macros.linkQuestion(dataCannotOpen.legalReason.isIntellectualPropertyReason._path) }}</p>
+                            {%- endif -%}
                         {%- endif -%}
-                        {%- if intellectualPropertyReason.isDecisionPowerOfMovingDataDefined._value is sameas true %}
-                            Someone will be given the decision power to move documents or data to a new place after the {{globals.projects}} has finished.{{ macros.linkQuestion(intellectualPropertyReason.isDecisionPowerOfMovingDataDefined._path) }}
-                        {%- endif -%}
-                    </p>
-                    {%- elif  dataCannotOpen.legalReason.isIntellectualPropertyReason._value is sameas false %}
-                        <p>There are no intellectual property reasons why our data cannot be open.{{ macros.linkQuestion(dataCannotOpen.legalReason.isIntellectualPropertyReason._path) }}</p>
                     {%- endif -%}
                 {%- endif -%}
             {%- else -%}
@@ -186,7 +206,7 @@
 
     {# Cold storage - preservation strategy #}
     {%- if data.dmp.sharedResources.preservationStrategies|length > 0 -%}
-        {%- set n = data.dmp.sharedResources.preservationStrategies | length -%}
+        {%- set n = data.dmp.sharedResources.preservationStrategies|length -%}
         <h4>Long-term Preservation of the Data</h4>
         {%- if data.dmp.sharedResources.preservationStrategies|length > 1 -%}
             <p>Within {{ globals.projects }}, there are {{ data.dmp.sharedResources.preservationStrategies | length }} approaches towards long-term data preservation.</p>
@@ -196,54 +216,56 @@
             {%- if n > 1 -%}<li style="margin-bottom: 2em;">{%- else -%}<div style="margin-bottom: 2em;">{%- endif -%}
 
             {{ macros.datasetIntro(preservationStrategy, "long-term preservation", data.dmp.datasets) }}
-            {% set numDatasets = preservationStrategy.usedBy | length %}
+            {% set numDatasets = preservationStrategy.usedBy|length %}
             {%- set accessRestriction = preservationStrategy.accessRestriction -%}
 
-            {%- if preservationStrategy.usesLongTermStorageDuringProject._value is sameas true and preservationStrategy.usesLongTermStorageAfterProject._value is sameas true %}
-            We will be archiving data (using so-called 'cold storage') for long term preservation after the {{globals.projects}}{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageAfterProject._path) }} but also already during the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageDuringProject._path) }}
-            {%- elif preservationStrategy.usesLongTermStorageDuringProject._value is sameas true %}
-            We will be archiving data (using so-called 'cold storage') for long term preservation already during the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageDuringProject._path) }}
-            {%- elif preservationStrategy.usesLongTermStorageAfterProject._value is sameas true %}
-            We will be archiving data (using so-called 'cold storage') for long term preservation after the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageAfterProject._path) }}
-            {%- elif preservationStrategy.usesLongTermStorageAfterProject._value is sameas false  and preservationStrategy.usesLongTermStorageDuringProject._value is sameas false %}
-            We will not be archiving data (using so-called 'cold storage') for long term preservation during or after the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageAfterProject._path) }}
-            {%- elif preservationStrategy.usesLongTermStorageDuringProject._value is sameas false -%}
-            We will not be archiving data (using so-called 'cold storage') for long term preservation during the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageDuringProject._path) }}
-            {%- elif preservationStrategy.usesLongTermStorageAfterProject._value is sameas false -%}
-            We will not be archiving data (using so-called 'cold storage') for long term preservation after the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageAfterProject._path) }}
-            {%- endif -%}
+            {%- if preservationStrategy.usesLongTermStorageDuringProject and preservationStrategy.usesLongTermStorageAfterProject -%}
+                {%- if preservationStrategy.usesLongTermStorageDuringProject._value is sameas true and preservationStrategy.usesLongTermStorageAfterProject._value is sameas true %}
+                We will be archiving data (using so-called 'cold storage') for long term preservation after the {{globals.projects}}{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageAfterProject._path) }} but also already during the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageDuringProject._path) }}
+                {%- elif preservationStrategy.usesLongTermStorageDuringProject._value is sameas true %}
+                We will be archiving data (using so-called 'cold storage') for long term preservation already during the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageDuringProject._path) }}
+                {%- elif preservationStrategy.usesLongTermStorageAfterProject._value is sameas true %}
+                We will be archiving data (using so-called 'cold storage') for long term preservation after the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageAfterProject._path) }}
+                {%- elif preservationStrategy.usesLongTermStorageAfterProject._value is sameas false  and preservationStrategy.usesLongTermStorageDuringProject._value is sameas false %}
+                We will not be archiving data (using so-called 'cold storage') for long term preservation during or after the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageAfterProject._path) }}
+                {%- elif preservationStrategy.usesLongTermStorageDuringProject._value is sameas false -%}
+                We will not be archiving data (using so-called 'cold storage') for long term preservation during the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageDuringProject._path) }}
+                {%- elif preservationStrategy.usesLongTermStorageAfterProject._value is sameas false -%}
+                We will not be archiving data (using so-called 'cold storage') for long term preservation after the {{globals.projects}}.{{ macros.linkQuestion(preservationStrategy.usesLongTermStorageAfterProject._path) }}
+                {%- endif -%}
 
-            {# How long will data be preserved during project? #}
-            {%- if preservationStrategy.usesLongTermStorageDuringProject._value is sameas true -%}
-            {% set period = preservationStrategy.longTermStorageDuringProject.archivePeriod %}
-                {% if period._value %}
-                    {% if period._value == "as_long_as_possible" %}
-                        This data will be retained during {{ globals.projects }} for as long as technically feasible.
-                    {% elif period._value == "until_needs_delete" %}
-                        This data will be retained during {{ globals.projects }} until deletion is required due to legal, contractual, or regulatory constraints.
-                    {% else %}
-                        This data will be retained during {{ globals.projects }} for a fixed period of {{ period._value }}.
+                {# How long will data be preserved during project? #}
+                {%- if preservationStrategy.usesLongTermStorageDuringProject._value is sameas true -%}
+                {% set period = preservationStrategy.longTermStorageDuringProject.archivePeriod %}
+                    {% if period and period._value %}
+                        {% if period._value == "as_long_as_possible" %}
+                            The data will be retained during {{ globals.projects }} for as long as technically feasible.
+                        {% elif period._value == "until_needs_delete" %}
+                            The data will be retained during {{ globals.projects }} until deletion is required due to legal, contractual, or regulatory constraints.
+                        {% else %}
+                            The data will be retained during {{ globals.projects }} for a fixed period of {{ period._value }}.
+                        {% endif %}
+                            {{ macros.linkQuestion(period._path) }}
                     {% endif %}
-                        {{ macros.linkQuestion(period._path) }}
-                {% endif %}
-            {%- endif -%}
+                {%- endif -%}
 
-            {%- if preservationStrategy.usesLongTermStorageAfterProject._value is sameas true -%}
-                {%- if preservationStrategy.longTermStorageAfterProject -%}
-                    {%- set longTermStorageAfterProject = preservationStrategy.longTermStorageAfterProject -%}
+                {%- if preservationStrategy.usesLongTermStorageAfterProject._value is sameas true -%}
+                    {%- if preservationStrategy.longTermStorageAfterProject -%}
+                        {%- set longTermStorageAfterProject = preservationStrategy.longTermStorageAfterProject -%}
 
-                    {# Lifetime #}
-                    {%- if longTermStorageAfterProject.minimumLifeTimeYears._value == "5" %}
-                        The minimum lifetime of the archive is 5 years.{{ macros.linkQuestion(longTermStorageAfterProject.minimumLifeTimeYears._path) }}
-                    {%- elif longTermStorageAfterProject.minimumLifeTimeYears._value == "10" %}
-                        The minimum lifetime of the archive is 10 years.{{ macros.linkQuestion(longTermStorageAfterProject.minimumLifeTimeYears._path) }}
-                    {%- elif longTermStorageAfterProject.minimumLifeTimeYears._value == "15" %}
-                        The minimum lifetime of the archive is 15 years.{{ macros.linkQuestion(longTermStorageAfterProject.minimumLifeTimeYears._path) }}
-                    {%- elif longTermStorageAfterProject.minimumLifeTimeYears._value -%}
-                        {%- set end = " year." if (longTermStorageAfterProject.minimumLifeTimeYears._value == "1") else " years." %}
-                        The minimum lifetime of the archive is {{longTermStorageAfterProject.minimumLifeTimeYears._value}} {{end}}{{ macros.linkQuestion(longTermStorageAfterProject.minimumLifeTimeYears._path) }}
-                    {%- elif longTermStorageAfterProject.minimumLifeTimeOther._value  %}
-                        The minimum lifetime of the archive is specially arranged {{longTermStorageAfterProject.minimumLifeTimeOther._value}}. {{ macros.linkQuestion(longTermStorageAfterProject.minimumLifeTimeOther._path) }}
+                        {# Lifetime #}
+                        {%- if longTermStorageAfterProject.minimumLifeTimeYears and longTermStorageAfterProject.minimumLifeTimeYears._value == "5" %}
+                            The minimum lifetime of the archive is 5 years.{{ macros.linkQuestion(longTermStorageAfterProject.minimumLifeTimeYears._path) }}
+                        {%- elif longTermStorageAfterProject.minimumLifeTimeYears and longTermStorageAfterProject.minimumLifeTimeYears._value == "10" %}
+                            The minimum lifetime of the archive is 10 years.{{ macros.linkQuestion(longTermStorageAfterProject.minimumLifeTimeYears._path) }}
+                        {%- elif longTermStorageAfterProject.minimumLifeTimeYears and longTermStorageAfterProject.minimumLifeTimeYears._value == "15" %}
+                            The minimum lifetime of the archive is 15 years.{{ macros.linkQuestion(longTermStorageAfterProject.minimumLifeTimeYears._path) }}
+                        {%- elif longTermStorageAfterProject.minimumLifeTimeYears and longTermStorageAfterProject.minimumLifeTimeYears._value -%}
+                            {%- set end = " year." if (longTermStorageAfterProject.minimumLifeTimeYears._value == "1") else " years." %}
+                            The minimum lifetime of the archive is {{longTermStorageAfterProject.minimumLifeTimeYears._value}} {{end}}{{ macros.linkQuestion(longTermStorageAfterProject.minimumLifeTimeYears._path) }}
+                        {%- elif longTermStorageAfterProject.minimumLifeTimeOther and longTermStorageAfterProject.minimumLifeTimeOther._value  %}
+                            The minimum lifetime of the archive is specially arranged {{longTermStorageAfterProject.minimumLifeTimeOther._value|markdown}}{{ macros.linkQuestion(longTermStorageAfterProject.minimumLifeTimeOther._path) }}
+                        {%- endif -%}
                     {%- endif -%}
                 {%- endif -%}
             {%- endif -%}
@@ -268,33 +290,33 @@
             {{ macros.datasetIntro(documentation, "documentation approach", data.dmp.datasets) }}
 
             {# Description #}
-            {% if documentation.description._value %}
+            {% if documentation.description %}
                 <p>
-                This documentation approach will cover: {{ documentation.description._value | e }}.
+                This documentation approach will cover: {{ documentation.description._value|markdown }}
                 {{ macros.linkQuestion(documentation.description._path) }}
                 </p>
             {% endif %}
 
             {# Additional included items #}
             {% set included_items = [] %}
-            {% if documentation.includeMethodology._value is sameas true %}
+            {% if documentation.includeMethodology and documentation.includeMethodology._value is sameas true %}
                 {% do included_items.append("methodological aspects of data collection") %}
             {% endif %}
-            {% if documentation.includeDataValidation._value is sameas true %}
+            {% if documentation.includeDataValidation and documentation.includeDataValidation._value is sameas true %}
                 {% do included_items.append("information on data validation procedures") %}
             {% endif %}
 
-            {% if included_items | length > 0 %}
+            {% if included_items|length > 0 %}
                 <p>
-                The documentation will include {{ included_items | join(" and ") }}{% if documentation.description._value %} to provide sufficient context{% endif %}.
+                The documentation will include {{ included_items | join(" and ") }} to provide sufficient context.
                 </p>
             {% endif %}
 
             {# Format #}
-            {% if documentation.format._value %}
+            {% if documentation.format and documentation.format._value %}
                 <p>
                 The documentation will be available in the following format:
-                <em>{{ documentation.format._value | e }}</em>.
+                <em>{{ documentation.format._value|e }}</em>.
                 {{ macros.linkQuestion(documentation.format._path) }}
                 </p>
             {% endif %}
@@ -315,55 +337,59 @@
             {%- if n > 1 -%}<li style="margin-bottom: 2em;">{%- else -%}<div style="margin-bottom: 2em;">{%- endif -%}
             {{ macros.datasetIntro(metadata, "specification for documenting data provenance", data.dmp.datasets) }}
             <p>
-            {%- if metadata.isProvenanceDocumented._value is sameas true -%}
-                {%- if metadata.provenanceDocumented.provenanceDocumentedType -%}
-                    {%- if metadata.provenanceDocumented.provenanceDocumentedType._value == "lab_notebook" -%}
-                        We will use lab notebooks to make sure that there is good provenance of the data analysis.
-                    {%- elif metadata.provenanceDocumented.provenanceDocumentedType._value == "electronic_lab_notebook" -%}
-                        We will use an electronic lab notebook to make sure that there is good provenance of the data analysis.
-                    {%- elif metadata.provenanceDocumented.provenanceDocumentedType._value == "system" -%}
-                        Our computing workflow system keeps provenance information to ensure the good provenance of the data analysis.
-                    {%- elif metadata.provenanceDocumented.provenanceDocumentedType -%}
-                        We will use other solution than (electronic) lab notebooks to make sure that there is good provenance of the data analysis{{ ": " ~ metadata.provenanceDocumented.provenanceDocumentedType._value }}
+            {%- if metadata.isProvenanceDocumented -%}
+                {%- if metadata.isProvenanceDocumented._value is sameas true -%}
+                    {%- if metadata.provenanceDocumented.provenanceDocumentedType -%}
+                        {%- if metadata.provenanceDocumented.provenanceDocumentedType._value == "lab_notebook" -%}
+                            We will use lab notebooks to make sure that there is good provenance of the data analysis.
+                        {%- elif metadata.provenanceDocumented.provenanceDocumentedType._value == "electronic_lab_notebook" -%}
+                            We will use an electronic lab notebook to make sure that there is good provenance of the data analysis.
+                        {%- elif metadata.provenanceDocumented.provenanceDocumentedType._value == "system" -%}
+                            Our computing workflow system keeps provenance information to ensure the good provenance of the data analysis.
+                        {%- elif metadata.provenanceDocumented.provenanceDocumentedType -%}
+                            We will use other solution than (electronic) lab notebooks to make sure that there is good provenance of the data analysis{{ ": " ~ metadata.provenanceDocumented.provenanceDocumentedType._value|markdown }}
+                        {%- endif -%}
+                        {{ macros.linkQuestion(metadata.provenanceDocumented.provenanceDocumentedType._path) }}
                     {%- endif -%}
-                    {{ macros.linkQuestion(metadata.provenanceDocumented.provenanceDocumentedType._path) }}
+
+                    {%- if metadata.provenanceDocumented.usesStandard and metadata.provenanceDocumented.usesStandard._value is sameas true -%}
+                        {%- if metadata.provenanceDocumented.standardProvenanceUsed %}
+                            For documenting the provenance, we will use the following standard: <em>{{ metadata.provenanceDocumented.standardProvenanceUsed._value }}</em>.{{ macros.linkQuestion(metadata.provenanceDocumented.standardProvenanceUsed._path) }}
+                        {%- else %}
+                            For documenting provenance we will use a standard (no specific standard has been provided).{{ macros.linkQuestion(metadata.provenanceDocumented.usesStandard._path) }}
+                        {%- endif -%}
+
+                    {%- elif metadata.provenanceDocumented.usesStandard and metadata.provenanceDocumented.usesStandard._value is sameas false -%}
+                        {%- if metadata.provenanceDocumented.noStandardReason._value == "no_standard" %}
+                            For documenting provenance we will not use a standard because there is no standard in our {{globals.project}} area.{{ macros.linkQuestion(metadata.provenanceDocumented.noStandardReason._path) }}
+                        {%- elif metadata.provenanceDocumented.noStandardReason._value %}
+                            For documenting provenance we will not use a standard because: {{ metadata.provenanceDocumented.noStandardReason._value }}.{{ macros.linkQuestion(metadata.provenanceDocumented.noStandardReason._path) }}
+                        {%- else %}
+                            We will not use a standard for documenting provenance.{{ macros.linkQuestion(metadata.provenanceDocumented.usesStandard._path) }}
+                        {%- endif -%}
+
+                    {%- endif -%}
+
+                {%- elif metadata.isProvenanceDocumented._value is sameas false -%}
+                    Provenance is not documented{%- if metadata.noProvenanceReason %} because: {{ metadata.noProvenanceReason._value }}{{ macros.linkQuestion(metadata.noProvenanceReason._path) }}{%- else -%}.{{ macros.linkQuestion(metadata.isProvenanceDocumented._path) }}{%- endif -%}
                 {%- endif -%}
-
-                {%- if metadata.provenanceDocumented.usesStandard._value is sameas true -%}
-                    {%- if metadata.provenanceDocumented.standardProvenanceUsed %}
-                        For documenting the provenance, we will use the following standard: <em>{{ metadata.provenanceDocumented.standardProvenanceUsed._value }}</em>.{{ macros.linkQuestion(metadata.provenanceDocumented.standardProvenanceUsed._path) }}
-                    {%- else %}
-                        For documenting provenance we will use a standard (no specific standard has been provided).{{ macros.linkQuestion(metadata.provenanceDocumented.usesStandard._path) }}
-                    {%- endif -%}
-
-                {%- elif metadata.provenanceDocumented.usesStandard._value is sameas false -%}
-                    {%- if metadata.provenanceDocumented.noStandardReason._value == "no_standard" %}
-                        For documenting provenance we will not use a standard because there is no standard in our {{globals.project}} area.{{ macros.linkQuestion(metadata.provenanceDocumented.noStandardReason._path) }}
-                    {%- elif metadata.provenanceDocumented.noStandardReason._value %}
-                        For documenting provenance we will not use a standard because: {{ metadata.provenanceDocumented.noStandardReason._value }}.{{ macros.linkQuestion(metadata.provenanceDocumented.noStandardReason._path) }}
-                    {%- else %}
-                        We will not use a standard for documenting provenance.{{ macros.linkQuestion(metadata.provenanceDocumented.usesStandard._path) }}
-                    {%- endif -%}
-
-                {%- endif -%}
-
-            {%- elif metadata.isProvenanceDocumented._value is sameas false -%}
-                Provenance is not documented{%- if metadata.noProvenanceReason %} because: {{ metadata.noProvenanceReason._value }}{{ macros.linkQuestion(metadata.noProvenanceReason._path) }}{%- else -%}.{{ macros.linkQuestion(metadata.isProvenanceDocumented._path) }}{%- endif -%}
             {%- else -%}
                 No information has been provided about whether provenance will be documented.
             {%- endif -%}
             </p>
 
-            {%- if metadata.isAvailableAfterDataNotAvailable._value is sameas true %}
-                <p>Metadata will be available even after the data is no longer available{{ macros.linkQuestion(metadata.isAvailableAfterDataNotAvailable._path) }}
-                {%- if metadata.howAvailableGuaranteed._value %}
-                (we will do the following: {{ metadata.howAvailableGuaranteed._value }}){{ macros.linkQuestion(metadata.howAvailableGuaranteed._path) }}</p>
+            {%- if metadata.isAvailableAfterDataNotAvailable -%}
+                {%- if metadata.isAvailableAfterDataNotAvailable._value is sameas true %}
+                    <p>Metadata will be available even after the data is no longer available{{ macros.linkQuestion(metadata.isAvailableAfterDataNotAvailable._path) }}
+                    {%- if metadata.howAvailableGuaranteed and metadata.howAvailableGuaranteed._value %}
+                    (we will do the following: {{ metadata.howAvailableGuaranteed._value }}){{ macros.linkQuestion(metadata.howAvailableGuaranteed._path) }}
+                    {%- endif -%}.</p>
+                {%- elif metadata.isAvailableAfterDataNotAvailable._value is sameas false %}
+                    <p>Metadata will <strong>not</strong> be available after the data is no longer available{{ macros.linkQuestion(metadata.isAvailableAfterDataNotAvailable._path) }}
+                    {%- if metadata.noAvailableReason and metadata.noAvailableReason._value %}
+                        (because: {{ metadata.noAvailableReason._value }}){{ macros.linkQuestion(metadata.noAvailableReason._path) }}
+                    {%- endif -%}.</p>
                 {%- endif -%}
-            {%- elif metadata.isAvailableAfterDataNotAvailable._value is sameas false %}
-                <p>Metadata will <strong>not</strong> be available after the data is no longer available{{ macros.linkQuestion(metadata.isAvailableAfterDataNotAvailable._path) }}
-                {%- if metadata.noAvailableReason._value %}
-                    (because: {{ metadata.noAvailableReason._value }}){{ macros.linkQuestion(metadata.noAvailableReason._path) }}
-                {%- endif -%}</p>
             {%- endif -%}
             {%- if n > 1 -%}</li>{%- else -%}</div>{%- endif -%}
         {% endfor %}
