@@ -4,6 +4,7 @@
 {%- set data = obj.result -%}
 {%- import "src/macros.html.j2" as macros with context -%}
 {%- import "src/globals.j2" as globals with context -%}
+{%- set azv_cr_logo = assets("static/AZVCR_color.svg") -%}
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
@@ -17,6 +18,15 @@
     </style>
   </head>
   <body>
+
+    <!-- Header -->
+    <div class="myHeader">
+        <img src="{{ azv_cr_logo.data_url }}" alt="Logo">
+        <div class="header-text">
+           {{ data.meta.document.name }}
+        </div>
+    </div>
+
     <article class="dmp">
       {%- if macros.formatDetection() == "HTML_with_warnings" -%}
         {% include "src/content/validation.html.j2" with context %}
@@ -28,5 +38,4 @@
       {% include "src/content/questions.html.j2" with context %}
     </article>
   </body>
-
 </html>
