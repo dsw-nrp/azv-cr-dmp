@@ -15,7 +15,6 @@ Responsible for the overall management and development of the document template,
 
 Contribute to the document template by adding new information, refining existing content, or providing insights to improve its quality and applicability.
 
-* **Marek Suchánek**, ORCID: [0000-0001-7525-9218](https://orcid.org/0000-0001-7525-9218), *Czech Technical University in Prague*
 * **Michal Růžička**, ORCID: [0000-0001-5547-8720](https://orcid.org/0000-0001-5547-8720), *Masaryk University*
 * **Peter Janků**, ORCID: [0000-0003-2899-3246](https://orcid.org/0000-0003-2899-3246), *Tomas Bata University in Zlín*
 * **Marek Suchánek**, ORCID: [0000-0001-7525-9218](https://orcid.org/0000-0001-7525-9218), *Czech Technical University in Prague*
