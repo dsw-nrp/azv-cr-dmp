@@ -2,6 +2,10 @@
 
 *The template is based on the official [Template Horizon Europe Data Management Plan (DMP)](https://ec.europa.eu/info/funding-tenders/opportunities/docs/2021-2027/horizon/temp-form/report/data-management-plan_he_en.docx) designed for use in Data Stewardship Wizard with DSW Knowledge Model tailored to needs and specifics of Czech National Repository Platform for Research Data.*
 
+## Issues and Contributing
+
+This document template for DSW is available as open-source via GitHub Repository [dsw-nrp/horizon-europe-dmp](https://github.com/dsw-nrp/horizon-europe-dmp), you can [report issues](https://github.com/dsw-nrp/horizon-europe-dmp/issues) there and fork it for customizations or contributions.
+
 ## Maintainers
 
 Responsible for the overall management and development of the document template, ensuring its continuous improvement, and overseeing contributions to maintain its integrity and relevance.
