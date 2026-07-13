@@ -4,7 +4,7 @@
 
 ## Issues and Contributing
 
-This document template for DSW is available as open-source via GitHub Repository [dsw-nrp/horizon-europe-dmp](https://github.com/dsw-nrp/horizon-europe-dmp), you can [report issues](https://github.com/dsw-nrp/horizon-europe-dmp/issues) there and fork it for customizations or contributions.
+This document template for DSW is available as open-source via GitHub Repository [dsw-nrp/azv-cr-dmp](https://github.com/dsw-nrp/azv-cr-dmp), you can [report issues](https://github.com/dsw-nrp/azv-cr-dmp/issues) there and fork it for customizations or contributions.
 
 ## Maintainers
 
