@@ -25,6 +25,12 @@ Contribute to the document template by adding new information, refining existing
 
 ## Changelog
 
+### 1.0.1
+
+*Released*: 2026-07-13
+
+* Fix rendering license from License Selector tool
+
 ### 1.0.0
 
 *Released*: 2026-06-11
